@@ -1,5 +1,5 @@
 detector_model : DR-SPAAM
-conf_thresh : 0.9
+conf_thresh : 0.1
 stride : 1
 panoramic_scan : false
 publisher:
