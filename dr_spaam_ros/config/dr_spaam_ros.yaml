@@ -4,3 +4,4 @@ use_gpu: True     # Set to True to use GPU
 conf_thresh: 0.5  # Set confidence threshold
 stride: 1         # Downsample scans for faster inference
 panoramic_scan: False  # Set to True if the scan covers 360 degree
+detect_mode: True  # Set to True to enable detection

@@ -43,5 +43,10 @@ sudo apt-get install -y \
     ros-$ROS_DISTRO-geometry-msgs \
     ros-$ROS_DISTRO-visualization-msgs \
 
+# Clone sobits_msgs
+cd ..
+git clone https://github.com/TeamSOBITS/sobits_msgs/
+cd $DIR
+
 
 echo "╚══╣ Setup: SOBIT PRO (FINISHED) ╠══╝"

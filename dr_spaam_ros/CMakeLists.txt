@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   tf2_msgs
   visualization_msgs
+  sobits_msgs
 )
 
 catkin_package()

@@ -1,11 +1,14 @@
 # import time
 import numpy as np
 import os
+
 import rospy
 from rospkg import RosPack
+
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Point, Pose, PoseArray
 from visualization_msgs.msg import Marker
+from sobits_msgs.srv import RunCtrl, RunCtrlResponse
 
 from dr_spaam.detector import Detector
 
@@ -30,12 +33,13 @@ class DrSpaamROS:
         """
         rp = RosPack()
 
-        self.weight_file = os.path.join(rp.get_path('dr_spaam_ros'), "weights", rospy.get_param("~weight_file"))
-        self.conf_thresh = rospy.get_param("~conf_thresh")
-        self.stride = rospy.get_param("~stride")
-        self.use_gpu = rospy.get_param("~use_gpu")
+        self.weight_file    = os.path.join(rp.get_path('dr_spaam_ros'), "weights", rospy.get_param("~weight_file"))
+        self.conf_thresh    = rospy.get_param("~conf_thresh")
+        self.stride         = rospy.get_param("~stride")
+        self.use_gpu        = rospy.get_param("~use_gpu")
         self.detector_model = rospy.get_param("~detector_model")
         self.panoramic_scan = rospy.get_param("~panoramic_scan")
+        self.detect_mode    = rospy.get_param("~detect_mode")
 
     def _init(self):
         """
@@ -58,7 +62,27 @@ class DrSpaamROS:
             topic, LaserScan, self._scan_callback, queue_size=queue_size
         )
 
+        # Service
+        self._run_ctrl_srv = rospy.Service(
+            "~run_ctrl", RunCtrl, self._run_ctrl_callback
+        )
+
+    def _run_ctrl_callback(self, msg):
+        """
+        @brief      Callback function for service call.
+        """
+        if msg.request == True:
+            self.detect_mode = True
+        elif msg.command == False:
+            self.detect_mode = False
+        else:
+            rospy.logerr("[DrSpaamROS] Unknown command: %d" % msg.request)
+
+        return RunCtrlResponse(True)
+
     def _scan_callback(self, msg):
+        if (not self.detect_mode): return
+
         if (
             self._dets_pub.get_num_connections() == 0
             and self._rviz_pub.get_num_connections() == 0
