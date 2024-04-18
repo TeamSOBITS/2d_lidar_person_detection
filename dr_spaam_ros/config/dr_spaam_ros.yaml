@@ -1,6 +1,6 @@
 weight_file: "ckpt_jrdb_pl_dr_spaam_phce_mixup_e20.pth" # name of the weight file
-detector_model: "DR-SPAAM"  # Model name: DROW3 or DR-SPAAM
-gpu: True  # True to use GPU
-conf_thresh: 0.5 
-stride: 1  # Downsample scans for faster inference
-panoramic_scan: False  # Set to true if the scan covers 360 degree
+detector_model: "DR-SPAAM"  # Set model name: DROW3 or DR-SPAAM
+use_gpu: True     # Set to True to use GPU
+conf_thresh: 0.5  # Set confidence threshold
+stride: 1         # Downsample scans for faster inference
+panoramic_scan: False  # Set to True if the scan covers 360 degree
