@@ -73,7 +73,7 @@ class DrSpaamROS:
         """
         if msg.request == True:
             self.detect_mode = True
-        elif msg.command == False:
+        elif msg.request == False:
             self.detect_mode = False
         else:
             rospy.logerr("[DrSpaamROS] Unknown command: %d" % msg.request)
