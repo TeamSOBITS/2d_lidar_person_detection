@@ -11,5 +11,5 @@ publisher:
 
 subscriber:
     scan:
-        topic: /segway/scan_multi
+        topic: /scan
         queue_size: 1
