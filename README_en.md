@@ -140,12 +140,12 @@ First, please set up the following environment before proceeding to the next ins
     ```yaml
     publisher:
         detections:
-            topic: /dr_spaam_detections
+            topic: ~dr_spaam_detections
             queue_size: 1
             latch: false
 
         rviz:
-            topic: /dr_spaam_rviz
+            topic: ~dr_spaam_rviz
             queue_size: 1
             latch: false
 
