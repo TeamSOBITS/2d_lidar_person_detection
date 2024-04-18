@@ -1,7 +1,8 @@
 # import time
 import numpy as np
+import os
 import rospy
-
+from rospkg import RosPack
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Point, Pose, PoseArray
 from visualization_msgs.msg import Marker
@@ -17,7 +18,7 @@ class DrSpaamROS:
         self._detector = Detector(
             self.weight_file,
             model=self.detector_model,
-            gpu=True,
+            gpu=self.use_gpu,
             stride=self.stride,
             panoramic_scan=self.panoramic_scan,
         )
@@ -27,9 +28,12 @@ class DrSpaamROS:
         """
         @brief      Reads parameters from ROS server.
         """
-        self.weight_file = rospy.get_param("~weight_file")
+        rp = RosPack()
+
+        self.weight_file = os.path.join(rp.get_path('dr_spaam_ros'), "weights", rospy.get_param("~weight_file"))
         self.conf_thresh = rospy.get_param("~conf_thresh")
         self.stride = rospy.get_param("~stride")
+        self.use_gpu = rospy.get_param("~use_gpu")
         self.detector_model = rospy.get_param("~detector_model")
         self.panoramic_scan = rospy.get_param("~panoramic_scan")
 
