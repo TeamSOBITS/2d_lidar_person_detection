@@ -27,27 +27,10 @@
     <li>
     　<a href="#実行操作方法">実行・操作方法</a>
       <ul>
-        <li><a href="#移動機構のみを使用する場合">移動機構のみを使用する場合</a></li>
-        <li><a href="#Rviz上の可視化">Rviz上の可視化</a></li>
+        <li><a href="#subscribers--publishers">Subscribers & Publishers</a></li>
       </ul>
     </li>
     <li>
-    　<a href="#ソフトウェア">ソフトウェア</a>
-      <ul>
-        <li><a href="#ジョイントコントローラ">ジョイントコントローラ</a></li>
-        <li><a href="#ホイルコントローラ">ホイルコントローラ</a></li>
-      </ul>
-    </li>
-    <li>
-    　<a href="#ハードウェア">ハードウェア</a>
-      <ul>
-        <li><a href="#パーツのダウンロード方法">パーツのダウンロード方法</a></li>
-        <li><a href="#電子回路図">電子回路図</a></li>
-        <li><a href="#ロボットの組み立て">ロボットの組み立て</a></li>
-        <li><a href="#ロボットの特徴">ロボットの特徴</a></li>
-        <li><a href="#部品リストBOM">部品リスト（BOM）</a></li>
-      </ul>
-    </li>
     <li><a href="#マイルストーン">マイルストーン</a></li>
     <!-- <li><a href="#contributing">Contributing</a></li> -->
     <!-- <li><a href="#license">License</a></li> -->
@@ -60,10 +43,28 @@
 <!-- レポジトリの概要 -->
 ## 概要
 
-SOBITSが開発した4輪独立ステアリング駆動式のモバイルマニピュレータ（SOBIT PRO）を動かすためのライブラリです．
+This repository implements DROW3 ([arXiv](https://arxiv.org/abs/1804.02463)) and DR-SPAAM ([arXiv](https://arxiv.org/abs/2004.14079)), real-time person detectors using 2D LiDARs mounted at ankle or knee height.
+Also included are experiments from *Self-Supervised Person Detection in 2D Range Data using a Calibrated Camera* ([arXiv](https://arxiv.org/abs/2012.08890)).
 
-> [!WARNING]
-> 初心者の場合，実機のロボットを扱う際に，先輩方に付き添ってもらいながらロボットを動かしましょう．
+<details>
+<summary>重みファイル一覧</summary>
+
+- ckpt_jrdb_ann_dr_spaam_e20.pth
+- ckpt_jrdb_ann_drow3_e40.pth
+- ckpt_jrdb_ann_ft_dr_spaam_e20.pth
+- ckpt_jrdb_ann_ft_drow3_e40.pth
+- ckpt_jrdb_pl_dr_spaam_e20.pth
+- ckpt_jrdb_pl_dr_spaam_mixup_e20.pth
+- ckpt_jrdb_pl_dr_spaam_phce_e20.pth
+- ckpt_jrdb_pl_dr_spaam_phce_mixup_e20.pth
+- ckpt_jrdb_pl_drow3_e40.pth
+- ckpt_jrdb_pl_drow3_phce_e40.pth
+- ckpt_jrdb_pl_drow3_phce_mixup_e40.pth
+- jrdb_dr_spaam_with_bev_box_e20.pth (Needs to be tested)
+
+</details>
+
+![](imgs/teaser_1.gif)
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
@@ -85,6 +86,7 @@ SOBITSが開発した4輪独立ステアリング駆動式のモバイルマニ�
 | Ubuntu | 20.04 (Focal Fossa) |
 | ROS | Noetic Ninjemys |
 | Python | 3.8 |
+| PyTorch | 2.2.1 (Tested) |
 
 > [!NOTE]
 > `Ubuntu`や`ROS`のインストール方法に関しては，[SOBITS Manual](https://github.com/TeamSOBITS/sobits_manual#%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)に参照してください．
@@ -102,11 +104,11 @@ SOBITSが開発した4輪独立ステアリング駆動式のモバイルマニ�
    ```
 2. 本レポジトリをcloneします．
    ```sh
-   $ git clone https://github.com/TeamSOBITS/sobit_pro
+   $ git clone https://github.com/TeamSOBITS/2d_lidar_person_detection
    ```
 3. レポジトリの中へ移動します．
    ```sh
-   $ cd sobit_pro/
+   $ cd 2d_lidar_person_detection/
    ```
 4. 依存パッケージをインストールします．
    ```sh
@@ -125,400 +127,78 @@ SOBITSが開発した4輪独立ステアリング駆動式のモバイルマニ�
 <!-- 実行・操作方法 -->
 ## 実行・操作方法
 
-1. SOBIT PROの起動する機能をパラメタとして[minimal.launch](sobit_pro_bringup/launch/minimal.launch)に設定します．
-   ```xml
-    <!-- Activate Mobile-Base (true), Arm (true), Head (true) -->
-    <arg name="enable_mb"           default="true"/>
-    <arg name="enable_arm"          default="true"/>
-    <arg name="enable_head"         default="true"/>
-    ...
-    <arg name="open_rviz"           default="true"/>
-    ...
-   ```
-
-> [!NOTE]
-> 使用したい機能に応じて，`true`か`false`かに書き換えてください．
-
-2. [minimal.launch](sobit_pro_bringup/launch/minimal.launch)というlaunchファイルを実行します．
-   ```sh
-   $ roslaunch sobit_pro_bringup minimal.launch
-   ```
-3. [任意] デモプログラムを実行してみましょう．
-   ```sh
-   $ rosrun sobit_pro_library test_controll_wheel.py
-   ```
-
-> [!NOTE]
-> SOBIT PROの動作方法になれるため，[example](sobit_pro_library/example/)フォルダを確認し，それぞれのサンプルファイルから動作関数を学びましょう．
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
-
-### 移動機構のみを使用する場合
-
-SOBIT PROの移動機構単体で動かすことができます．
-
-1. [minimal.launch](sobit_pro_bringup/launch/minimal.launch)の設定を次にように書き換えます．
-    ```xml
-    <!-- Activate Mobile-Base (true), Arm (true), Head (true) -->
-    <arg name="enable_mb"           default="true"/>
-    <arg name="enable_arm"          default="false"/>
-    <arg name="enable_head"         default="false"/>
-
-    <!-- URG: lan-cable (true), usb-cable (false) -->
-    <arg name="urg_lan"             default="false"/>
-    ...
+1. [dr_spaam_ros.yaml](dr_spaam_ros/config/dr_spaam_ros.yaml)のパラメータを設定する．
+    ```yaml
+    weight_file: "ckpt_jrdb_ann_ft_dr_spaam_e20.pth" # Name of the weight file
+    detector_model: "DR-SPAAM"  # Set model name: DROW3 or DR-SPAAM
+    use_gpu: True     # Set to True to use GPU
+    conf_thresh: 0.5  # Set confidence threshold
+    stride: 1         # Downsample scans for faster inference
+    panoramic_scan: False  # Set to True if the scan covers 360 degree
+    detect_mode: True # Set detection mode when launching
     ```
-2. [minimal.launch](sobit_pro_bringup/launch/minimal.launch)というlaunchファイルを実行します．
+2. [topics.yaml](dr_spaam_ros/config/topics.yaml)のパラメータを設定する．
+    ```yaml
+    publisher:
+        detections:
+            topic: /dr_spaam_detections
+            queue_size: 1
+            latch: false
+
+        rviz:
+            topic: /dr_spaam_rviz
+            queue_size: 1
+            latch: false
+
+    subscriber:
+        scan:
+            topic: /scan
+            queue_size: 1
+    ```
+3. [dr_spaam_ros.launch](dr_spaam_ros/launch/dr_spaam_ros.launch)というlaunchファイルを実行します．
     ```sh
-    $ roslaunch sobit_pro_bringup minimal.launch
-    ```
-3. [任意] デモプログラムを実行してみましょう．
-    ```sh
-    $ rosrun sobit_pro_library test_controll_wheel.py
-    ```
-
-> [!NOTE]
-> URG(LiDAR)はLAN式通信の場合は`true`に，USB式通信の場合は`false`に設定してください．
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
-
-### Rviz上の可視化
-
-実機を動かす前段階として，Rviz上でSOBIT PROを可視化し，ロボットの構成を表示することができます．
-
-```sh
-$ roslaunch sobit_pro_description display.launch
-```
-
-正常に動作した場合は，次のようにRvizが表示されます．
-![SOBIT PRO Display with Rviz](sobit_pro/docs/img/sobit_pro_display.png)
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
-
-## ソフトウェア
-
-<details>
-<summary>SOBIT PROと関わるソフトの情報まとめ</summary>
-
-
-### ジョイントコントローラ
-
-SOBIT PROのパンチルト機構とマニピュレータを動かすための情報まとめです．
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
-
-#### 動作関数
-
-1.  `moveToPose()` : 決められたポーズに動かします．
-    ```cpp
-    bool moveToPose(
-        const std::string& pose_name,               // ポーズ名
-        const double sec = 5.0                      // 動作時間 [s]
-        bool is_sleep = true                        // 回転後に待機するかどうか
-    );
-    ```
-
-> [!NOTE]
-> 既存のポーズは[sobit_pro_pose.yaml](sobit_pro_library/config/sobit_pro_pose.yaml)に確認でいます．ポーズの作成方法については[ポーズの設定方法](#ポーズの設定方法)をご参照ください．
-
-2.  `moveAllJoint()` : すべてのジョイントを任意の角度に動かします．
-    ```cpp
-    bool sobit::SobitProJointController::moveAllJoint (
-        const double arm_shoulder_tilt_joint,       // 回転角度 [rad]
-        const double arm_elbow_upper_tilt_joint,    // 回転角度 [rad]
-        const double arm_elbow_lower_tilt_joint,    // 回転角度 [rad]
-        const double arm_elbow_lower_pan_joint,     // 回転角度 [rad]
-        const double arm_wrist_tilt_joint,          // 回転角度 [rad]
-        const double hand_joint,                    // 回転角度 [rad]
-        const double head_pan_joint,                // 回転角度 [rad]
-        const double head_tilt_joint,               // 回転角度 [rad]
-        const double sec = 5.0,                     // 回転時間 [s]
-        bool is_sleep = true                        // 回転後に待機するかどうか
-    );
-    ```
-
-3.  `moveJoint()` : 指定されたジョイントを任意の角度に動かします．
-    ```cpp
-    bool sobit::SobitProJointController::moveJoint (
-        const Joint joint_num,                      // ジョイント名 (定数名)
-        const double rad,                           // 回転角度 [rad]
-        const double sec = 5.0,                     // 回転時間 [s]
-        bool is_sleep = true                        // 回転後に待機するかどうか
-    );
-    ```
-
-> [!NOTE]
-> `ジョイント名`は[ジョイント名](#ジョイント名)をご確認ください．
- 
-4.  `moveArm()` : アームの関節を任意の角度に動かします．
-    ```cpp
-    bool sobit::SobitProJointController::moveArm(
-        const double arm_shoulder_tilt_joint,       // 回転角度 [rad]
-        const double arm_elbow_upper_tilt_joint,    // 回転角度 [rad]
-        const double arm_elbow_lower_tilt_joint,    // 回転角度 [rad]
-        const double arm_elbow_lower_pan_joint,     // 回転角度 [rad]
-        const double arm_wrist_tilt_joint,          // 回転角度 [rad]
-        const double sec = 5.0,                     // 回転時間 [s]
-        bool is_sleep = true                        // 回転後に待機するかどうか
-    );
-    ```
-
-5.  `moveHeadPanTilt()` : パンチルト機構を任意の角度に動かす．
-    ```cpp
-    bool sobit::SobitProJointController::moveHeadPanTilt(
-        const double head_camera_pan,               // 回転角度 [rad]
-        const double head_camera_tilt,              // 回転角度 [rad]
-        const double sec = 5.0,                     // 移動時間 [s]
-        bool is_sleep = true                        // 回転後に待機するかどうか
-    );
-    ```
-
-6.  `moveHandToTargetCoord()` : ハンドをxyz座標に動かします（把持モード）．
-    ```cpp
-    bool sobit::SobitProJointController::moveHandToTargetCoord(
-        const double target_pos_x,                  // 把持目的地のx [m]
-        const double target_pos_y,                  // 把持目的地のy [m]
-        const double target_pos_z,                  // 把持目的地のz [m]
-        const double shift_x,                       // xyz座標のx軸をシフトする [m]
-        const double shift_y,                       // xyz座標のy軸をシフトする [m]
-        const double shift_z                        // xyz座標のz軸をシフトする [m]
-        const double sec = 5.0,                     // 移動時間 [s]
-        bool is_sleep = true                        // 回転後に待機するかどうか
-    );
-    ```
-
-7.  `moveHandToTargetTF()` : ハンドをtf名に動かします（把持モード）．
-    ```cpp
-    bool sobit::SobitProJointController::moveHandToTargetTF(
-        const std::string& target_name,             // 把持目的tf名
-        const double shift_x,                       // xyz座標のx軸をシフトする [m]
-        const double shift_y,                       // xyz座標のy軸をシフトする [m]
-        const double shift_z                        // xyz座標のz軸をシフトする [m]
-        const double sec = 5.0,                     // 移動時間 [s]
-        bool is_sleep = true                        // 回転後に待機するかどうか
-    );
-    ```
-
-8.  `moveHandToPlaceCoord()` : ハンドをxyz座標に動かします（配置モード）．
-    ```cpp
-    bool sobit::SobitProJointController::moveHandToPlaceCoord(
-        const double target_pos_x,                  // 配置目的地のx [m]
-        const double target_pos_y,                  // 配置目的地のy [m]
-        const double target_pos_z,                  // 配置目的地のz [m]
-        const double shift_x,                       // xyz座標のx軸をシフトする [m]
-        const double shift_y,                       // xyz座標のy軸をシフトする [m]
-        const double shift_z                        // xyz座標のz軸をシフトする [m]
-        const double sec = 5.0,                     // 移動時間 [s]
-        bool is_sleep = true                        // 回転後に待機するかどうか
-    ); 
-    ```
-
-9.  `moveHandToPlaceTF()` : ハンドをtf名に動かします（配置モード）．
-    ```cpp
-    bool sobit::SobitProJointController::moveHandToPlaceTF(
-        const std::string& target_name,             // 配置目的tf名
-        const double shift_x,                       // xyz座標のx軸をシフトする [m]
-        const double shift_y,                       // xyz座標のy軸をシフトする [m]
-        const double shift_z                        // xyz座標のz軸をシフトする [m]
-        const double sec = 5.0,                     // 移動時間 [s]
-        bool is_sleep = true                        // 回転後に待機するかどうか
-    );
-    ```
-
-10.  `graspDecision()` : ハンドに流れる電流値に応じて，把持判定が決まります．
-    ```cpp
-    bool sobit::SobitProJointController::graspDecision(
-        const int min_curr = 300,                   // 最小電流値
-        const int max_curr = 1000                   // 最大電流値
-    );
-    ```
-
-11.  `placeDecision()` : ハンドに流れる電流値に応じて，配置判定が決まります．
-    ```cpp
-    bool sobit::SobitProJointController::placeDecision(
-        const int min_curr = 500,                   // 最小電流値
-        const int max_curr = 1000                   // 最大電流値
-    );
+   $ roslaunch dr_spaam_ros dr_spaam_ros.launch
     ```
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
 
-#### ジョイント名
+### Subscribers & Publishers
 
-SOBIT PROのジョイント名とその定数名を以下の通りです．
+- Subscribers:
 
-| ジョイント番号 | ジョイント名 | ジョイント定数名 |
-| :---: | --- | --- |
-| 0 | arm_shoulder_1_tilt_joint | ARM_SHOULDER_1_TILT_JOINT |
-| 1 | arm_shoulder_2_tilt_joint | ARM_SHOULDER_2_TILT_JOINT |
-| 2 | arm_elbow_upper_1_tilt_joint | ARM_ELBOW_UPPER_1_TILT_JOINT |
-| 3 | arm_elbow_upper_2_tilt_joint | ARM_ELBOW_UPPER_2_TILT_JOINT |
-| 4 | arm_elbow_lower_tilt_joint | ARM_ELBOW_LOWER_TILT_JOINT |
-| 5 | arm_elbow_lower_pan_joint | ARM_ELBOW_LOWER_PAN_JOINT |
-| 6 | arm_wrist_tilt_joint | ARM_WRIST_TILT_JOINT |
-| 7 | hand_joint | HAND_JOINT |
-| 8 | head_pan_joint | HEAD_PAN_JOINT |
-| 9 | head_tilt_joint | HEAD_TILT_JOINT |
+| トピック名 | 型 | 意味 |
+| --- | --- | --- |
+| /scan | sensor_msgs/LaserScan | LiDARのスキャン情報 |
 
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
+- Publishers:
+
+| トピック名 | 型 | 意味 |
+| --- | --- | --- |
+| /dr_spaam_ros/dr_spaam_detections | geometry_msgs/PoseArray   | 3次元位置検出結果の配列 | 
+| /dr_spaam_ros/dr_spaam_rviz       | visualization_msgs/Marker | RViz上の結果の可視化 |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-#### ポーズの設定方法
+### Services
 
-[sobit_pro_pose.yaml](sobit_pro_library/config/sobit_pro_pose.yaml)というファイルでポーズの追加・編集ができます．以下のようなフォーマットになります．
+| サービス名 | 型 | 意味 |
+| --- | --- | --- |
+| /dr_spaam_ros/run_ctrl | sobits_msgs/RunCtrl | 3次元位置検出の切り替え (ON:`true`, OFF:`false`) |
 
-```yaml
-sobit_pro_pose:
-        - { 
-        pose_name: "pose_name",
-        arm_shoulder_1_tilt_joint: 1.57,
-        arm_elbow_upper_1_tilt_joint: 1.57,
-        arm_elbow_lower_tilt_joint: 0.0,
-        arm_elbow_lower_pan_joint: -1.57,
-        arm_wrist_tilt_joint: -1.57,
-        hand_joint: 0.0,
-        head_pan_joint: 0.0,
-        head_tilt_joint: 0.0
-        }
-    ...
-```  
-
-### ホイルコントローラ
-
-SOBIT PROの移動機構を動かすための情報まとめです．
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
-
-#### 動作関数
-
-1.  `controlWheelLinear()` : 並進（直進移動・斜め移動・横移動）に移動させます．
-    ```cpp
-    bool sobit::SobitProWheelController::controlWheelLinear (
-        const double distance_x,                    // x方向への直進移動距離 [m]
-        const double distance_y,                    // y方向への直進移動距離 [m]
-    )
-    ```  
-2.  `controlWheelRotateRad()` : 回転運動を行う(弧度法：Radian)
-    ```cpp
-    bool sobit::SobitProWheelController::controlWheelRotateRad (
-        const double angle_rad,                     // 中心回転角度 [rad]
-    )
-    ```  
-3.  `controlWheelRotateDeg()` : 回転運動を行う(度数法：Degree)
-    ```cpp
-    bool sobit::SobitProWheelController::controlWheelRotateDeg ( 
-        const double angle_deg,                     // 中心回転角度 (deg)
-    )
-    ```
-
-</details>
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
-
-## ハードウェア
-SOBIT PROはオープンソースハードウェアとして[OnShape](https://cad.onshape.com/documents/4acbecde07fba120a62ec033/w/c6217b66947274dee4e8f911/e/c2e5c16292d7dfc11ee3cc01?renderMode=0&uiState=654a13b8711fc82bedc118e2)にて公開しております．
-
-![SOBIT PRO in OnShape](sobit_pro/docs/img/sobit_pro_onshape.png)
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
-
-<details>
-<summary>ハードウェアの詳細についてはこちらを確認してください．</summary>
-
-### パーツのダウンロード方法
-
-1. Onshapeにアクセスしましょう．
-
-> [!NOTE]
-> ファイルをダウンロードするために，`OnShape`のアカウントを作成する必要がありません．ただし，本ドキュメント全体をコピする場合，アカウントの作成を推薦します．
-
-2. `Instances`の中にパーツを右クリックで選択します．
-3. 一覧が表示され，`Export`ブタンを押してください．
-4. 表示されたウィンドウの中に，`Format`という項目があります．`STEP`を選択してください．
-5. 最後に，青色の`Export`ボタンを押してダウンロードが開始されます．
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
-
-### 電子回路図
-
-TBD
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
-
-### ロボットの組み立て
-
-TBD
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
-
-### ロボットの特徴
-
-| 項目 | 詳細 |
-| --- | --- |
-| 最大直進速度 | 0.7[m/s] |
-| 最大回転速度 | 0.229[rad/s] |
-| 最大ペイロード | 0.35[kg] |
-| サイズ (長さx幅x高さ) | 450x450x1250[mm] |
-| 重量 | 16[kg] |
-| リモートコントローラ | PS3/PS4 |
-| LiDAR | UST-20LX |
-| RGB-D | Azure Kinect DK (頭部)，RealSense D405 (アーム) |
-| IMU | LSM6DSMUS |
-| スピーカー | モノラルスピーカー |
-| マイク | コンデンサーマイク |
-| アクチュエータ (アーム) | 2 x XM540-W150, 6 x XM430-W320 |
-| アクチュエータ (移動機構) | 4 x XM430-W320, 4 x XM430-W210 |
-| 電源 | 2 x Makita 6.0Ah 18V |
-| PC接続 | USB |
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
-
-### 部品リスト（BOM）
-
-| 部品 | 型番 | 個数 | 購入先 |
-| --- | --- | --- | --- |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-| --- | --- | 1 | [link]() |
-
-
-</details>
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 <!-- マイルストーン -->
 ## マイルストーン
 
-- [x] パラメタによるSOBIT PROと移動機構のみの切り替え
-- [x] exampleファイルの修正
+- [x] 検出機能のサービス化
 - [x] OSS
     - [x] ドキュメンテーションの充実
     - [x] コーディングスタイルの統一
 
-現時点のバッグや新規機能の依頼を確認するために[Issueページ][license-url] をご覧ください．
+現時点のバッグや新規機能の依頼を確認するために[Issueページ][issues-url] をご覧ください．
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
@@ -551,9 +231,10 @@ Distributed under the MIT License. See `LICENSE.txt` for more NOTErmation.
 <!-- 参考文献 -->
 ## 参考文献
 
-* [Dynamixel SDK](https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/overview/)
+* [DROW3](https://arxiv.org/abs/1804.02463)
+* [DR-SPAAM](https://arxiv.org/abs/2004.14079)
+* [ 2D_lidar_person_detection(official)](https://github.com/VisualComputingInstitute/2D_lidar_person_detection)
 * [ROS Noetic](http://wiki.ros.org/noetic)
-* [ROS Control](http://wiki.ros.org/ros_control)
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
@@ -561,13 +242,13 @@ Distributed under the MIT License. See `LICENSE.txt` for more NOTErmation.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/TeamSOBITS/sobit_pro.svg?style=for-the-badge
-[contributors-url]: https://github.com/TeamSOBITS/sobit_pro/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/TeamSOBITS/sobit_pro.svg?style=for-the-badge
-[forks-url]: https://github.com/TeamSOBITS/sobit_pro/network/members
-[stars-shield]: https://img.shields.io/github/stars/TeamSOBITS/sobit_pro.svg?style=for-the-badge
-[stars-url]: https://github.com/TeamSOBITS/sobit_pro/stargazers
-[issues-shield]: https://img.shields.io/github/issues/TeamSOBITS/sobit_pro.svg?style=for-the-badge
-[issues-url]: https://github.com/TeamSOBITS/sobit_pro/issues
-[license-shield]: https://img.shields.io/github/license/TeamSOBITS/sobit_pro.svg?style=for-the-badge
+[contributors-shield]: https://img.shields.io/github/contributors/TeamSOBITS/2d_lidar_person_detection.svg?style=for-the-badge
+[contributors-url]: https://github.com/TeamSOBITS/2d_lidar_person_detection/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/TeamSOBITS/2d_lidar_person_detection.svg?style=for-the-badge
+[forks-url]: https://github.com/TeamSOBITS/2d_lidar_person_detection/network/members
+[stars-shield]: https://img.shields.io/github/stars/TeamSOBITS/2d_lidar_person_detection.svg?style=for-the-badge
+[stars-url]: https://github.com/TeamSOBITS/2d_lidar_person_detection/stargazers
+[issues-shield]: https://img.shields.io/github/issues/TeamSOBITS/2d_lidar_person_detection.svg?style=for-the-badge
+[issues-url]: https://github.com/TeamSOBITS/2d_lidar_person_detection/issues
+[license-shield]: https://img.shields.io/github/license/TeamSOBITS/2d_lidar_person_detection.svg?style=for-the-badge
 [license-url]: LICENSE

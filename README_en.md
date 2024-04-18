@@ -27,8 +27,7 @@
     <li>
     　<a href="#launch-and-usage">Launch and Usage</a>
       <ul>
-        <li><a href="#if-only-using-mobile-mechanism">If only using mobile mechanism</a></li>
-        <li><a href="#visualization-on-rviz<">Visualization on Rviz</a></li>
+        <li><a href="#subscribers--publishers">Subscribers & Publishers</a></li>
       </ul>
     </li>
     <li><a href="#milestone">Milestone</a></li>
@@ -129,31 +128,31 @@ First, please set up the following environment before proceeding to the next ins
 
 1. Set the parameters inside [dr_spaam_ros.yaml](dr_spaam_ros/config/dr_spaam_ros.yaml).
     ```yaml
-        weight_file: "ckpt_jrdb_ann_ft_dr_spaam_e20.pth" # Name of the weight file
-        detector_model: "DR-SPAAM"  # Set model name: DROW3 or DR-SPAAM
-        use_gpu: True     # Set to True to use GPU
-        conf_thresh: 0.5  # Set confidence threshold
-        stride: 1         # Downsample scans for faster inference
-        panoramic_scan: False  # Set to True if the scan covers 360 degree
-        detect_mode: True # Set detection mode when launching
+    weight_file: "ckpt_jrdb_ann_ft_dr_spaam_e20.pth" # Name of the weight file
+    detector_model: "DR-SPAAM"  # Set model name: DROW3 or DR-SPAAM
+    use_gpu: True     # Set to True to use GPU
+    conf_thresh: 0.5  # Set confidence threshold
+    stride: 1         # Downsample scans for faster inference
+    panoramic_scan: False  # Set to True if the scan covers 360 degree
+    detect_mode: True # Set detection mode when launching
     ```
 2. Set the parameters inside [topics.yaml](dr_spaam_ros/config/topics.yaml).
     ```yaml
-        publisher:
-            detections:
-                topic: /dr_spaam_detections
-                queue_size: 1
-                latch: false
+    publisher:
+        detections:
+            topic: /dr_spaam_detections
+            queue_size: 1
+            latch: false
 
-            rviz:
-                topic: /dr_spaam_rviz
-                queue_size: 1
-                latch: false
+        rviz:
+            topic: /dr_spaam_rviz
+            queue_size: 1
+            latch: false
 
-        subscriber:
-            scan:
-                topic: /scan
-                queue_size: 1
+    subscriber:
+        scan:
+            topic: /scan
+            queue_size: 1
     ```
 3. Execute the launch file [dr_spaam_ros.launch](dr_spaam_ros/launch/dr_spaam_ros.launch).
    ```sh
@@ -230,9 +229,10 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-* [Dynamixel SDK](https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/overview/)
+* [DROW3](https://arxiv.org/abs/1804.02463)
+* [DR-SPAAM](https://arxiv.org/abs/2004.14079)
+* [ 2D_lidar_person_detection(official)](https://github.com/VisualComputingInstitute/2D_lidar_person_detection)
 * [ROS Noetic](http://wiki.ros.org/noetic)
-* [ROS Control](http://wiki.ros.org/ros_control)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
