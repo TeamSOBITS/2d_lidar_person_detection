@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 from dr_spaam_ros.dr_spaam_ros import DrSpaamROS
