@@ -43,8 +43,8 @@
 <!-- レポジトリの概要 -->
 ## 概要
 
-This repository implements DROW3 ([arXiv](https://arxiv.org/abs/1804.02463)) and DR-SPAAM ([arXiv](https://arxiv.org/abs/2004.14079)), real-time person detectors using 2D LiDARs mounted at ankle or knee height.
-Also included are experiments from *Self-Supervised Person Detection in 2D Range Data using a Calibrated Camera* ([arXiv](https://arxiv.org/abs/2012.08890)).
+本リポジトリには，足首や膝の高さに取り付けた2D LiDARを使ったリアルタイム人物検出器DROW3 ([arXiv](https://arxiv.org/abs/1804.02463)) とDR-SPAAM ([arXiv](https://arxiv.org/abs/2004.14079)) が実装されている．
+また，*Self-Supervised Person Detection in 2D Range Data using a Calibrated Camera* ([arXiv](https://arxiv.org/abs/2012.08890))の実験も含まれている．
 
 <details>
 <summary>重みファイル一覧</summary>
@@ -178,7 +178,7 @@ Also included are experiments from *Self-Supervised Person Detection in 2D Range
 | /dr_spaam_ros/dr_spaam_detections | geometry_msgs/PoseArray   | 3次元位置検出結果の配列 | 
 | /dr_spaam_ros/dr_spaam_rviz       | visualization_msgs/Marker | RViz上の結果の可視化 |
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
 
 ### Services
@@ -187,7 +187,7 @@ Also included are experiments from *Self-Supervised Person Detection in 2D Range
 | --- | --- | --- |
 | /dr_spaam_ros/run_ctrl | sobits_msgs/RunCtrl | 3次元位置検出の切り替え (ON:`true`, OFF:`false`) |
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
 
 <!-- マイルストーン -->
