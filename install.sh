@@ -13,9 +13,7 @@ python3 -m pip install \
     scikit-learn \
     setuptools \
     gdown \
-    json \
     tqdm \
-    functools \
     python-lzf \
     tensorboardX
 
