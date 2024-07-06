@@ -20,10 +20,12 @@ class DrSpaamROS:
         self._read_params()
         self._detector = Detector(
             self.weight_file,
-            model=self.detector_model,
-            gpu=self.use_gpu,
-            stride=self.stride,
-            panoramic_scan=self.panoramic_scan,
+            model          = self.detector_model,
+            gpu            = self.use_gpu,
+            stride         = self.stride,
+            panoramic_scan = self.panoramic_scan,
+            tracking       = self.tracking,
+            box            = self.use_box
         )
         self._init()
 
@@ -34,11 +36,14 @@ class DrSpaamROS:
         rp = RosPack()
 
         self.weight_file    = os.path.join(rp.get_path('dr_spaam_ros'), "weights", rospy.get_param("~weight_file"))
-        self.conf_thresh    = rospy.get_param("~conf_thresh")
-        self.stride         = rospy.get_param("~stride")
-        self.use_gpu        = rospy.get_param("~use_gpu")
         self.detector_model = rospy.get_param("~detector_model")
+        self.use_gpu        = rospy.get_param("~use_gpu")
+        self.stride         = rospy.get_param("~stride")
         self.panoramic_scan = rospy.get_param("~panoramic_scan")
+        self.use_box        = rospy.get_param("~use_box")
+        self.tracking       = rospy.get_param("~tracking")
+        self.dets_thresh    = rospy.get_param("~dets_thresh")
+        self.track_thresh   = rospy.get_param("~track_thresh")
         self.detect_mode    = rospy.get_param("~detect_mode")
 
     def _init(self):
@@ -101,23 +106,94 @@ class DrSpaamROS:
         scan[np.isnan(scan)] = 29.99
 
         # t = time.time()
-        dets_xy, dets_cls, _ = self._detector(scan)
+        dets_xy, dets_cls, instance_mask = self._detector(scan)
+
+        tracks, tracks_cls = self._detector.get_tracklets() if self.tracking else ([], [])
+        ids = np.array(self._detector._tracker._prev_dets_to_tracks)
+        # print("ids: ", ids)
+        # print("dets_xy: ", dets_xy)
+        # print("self._prev_instance_mask", self._detector._tracker._prev_instance_mask)     
+
         # print("[DrSpaamROS] End-to-end inference time: %f" % (t - time.time()))
 
-        # confidence threshold
-        conf_mask = (dets_cls >= self.conf_thresh).reshape(-1)
-        dets_xy = dets_xy[conf_mask]
-        dets_cls = dets_cls[conf_mask]
+        # confidence threshold for detections
+        conf_mask = (dets_cls >= self.dets_thresh).reshape(-1)
+        dets_xy   = dets_xy[conf_mask]
+        dets_cls  = dets_cls[conf_mask]
+        ids       = ids[conf_mask]
+
+        # temp_tracks = []
+        # for i in ids:
+        #     if 0 <= i < len(tracks):  # Check for valid index within list range
+        #         temp_tracks.append(tracks[i])
+        # tracks = temp_tracks
+        # print("len(tracks): ", len(tracks))
+
+        # temp_cls = []
+        # for i in ids:
+        #     if 0 <= i < len(tracks_cls):
+        #         temp_cls.append(tracks_cls[i])
+        # tracks_cls = temp_cls
+
+        # confidence threshold for tracks
+        tracks_mask = [tc >= self.dets_thresh and len(t) > 1 for t, tc in zip(tracks, tracks_cls)]
+        tracks      = [t for t, m in zip(tracks, tracks_mask) if m]
+        tracks_cls  = [tc for tc, m in zip(tracks_cls, tracks_mask) if m]
+        # print("len(tracks): ", len(tracks))
 
         # convert to ros msg and publish
         dets_msg = detections_to_pose_array(dets_xy, dets_cls)
         dets_msg.header = msg.header
         self._dets_pub.publish(dets_msg)
 
+        # publish detection to rviz
         rviz_msg = detections_to_rviz_marker(dets_xy, dets_cls)
         rviz_msg.header = msg.header
         self._rviz_pub.publish(rviz_msg)
 
+        # publish tracks to rviz
+        if self.tracking:
+            rviz_msg = tracks_to_rviz_marker(tracks)
+            rviz_msg.header = msg.header
+            self._rviz_pub.publish(rviz_msg)
+
+def tracks_to_rviz_marker(tracks):
+    # ROS message (Marker) for track visualization
+    msg = Marker()
+    msg.action = Marker.ADD
+    msg.ns = "dr_spaam_ros"
+    msg.id = 1
+    msg.type = Marker.LINE_LIST
+
+    # set quaternion so that RViz does not give warning
+    msg.pose.orientation.x = 0.0
+    msg.pose.orientation.y = 0.0
+    msg.pose.orientation.z = 0.0
+    msg.pose.orientation.w = 1.0
+
+    msg.scale.x = 0.03  # line width
+    # green color
+    msg.color.g = 1.0
+    msg.color.a = 1.0
+
+    # to msg
+    for track in tracks:
+        for i in range(len(track) - 1):
+            # start point of a segment
+            p0 = Point()
+            p0.x = track[i][0]
+            p0.y = track[i][1]
+            p0.z = 0.0
+            msg.points.append(p0)
+
+            # # end point
+            p1 = Point()
+            p1.x = track[i + 1][0]
+            p1.y = track[i + 1][1]
+            p1.z = 0.0
+            msg.points.append(p1)
+
+    return msg
 
 def detections_to_rviz_marker(dets_xy, dets_cls):
     """
