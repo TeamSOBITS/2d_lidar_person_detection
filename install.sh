@@ -34,7 +34,7 @@ python3 -m gdown https://drive.google.com/drive/folders/1OI99VfUBkmRSijgmMYYku9P
 # Download ROS dependencies
 sudo apt-get update
 sudo apt-get install -y \
-    ros-$ROS_DISTRO-rosbag \
+    ros-$ROS_DISTRO-rosbag2 \
     ros-$ROS_DISTRO-tf2 \
     ros-$ROS_DISTRO-tf2-ros \
     ros-$ROS_DISTRO-sensor-msgs \
