@@ -36,39 +36,34 @@ class DrSpaamROS(Node):
         """
         package_share_directory = get_package_share_directory('dr_spaam_ros')
 
-        self.weight_file    = os.path.join(package_share_directory, "weights", self.declare_parameter("weight_file", "default_weight_file").value)
+        # self.weight_file    = os.path.join(package_share_directory, "weights", self.declare_parameter("weight_file", "default_weight_file").value)
+        self.weight_file    = os.path.join("..", "weights", self.declare_parameter("weight_file", "ckpt_jrdb_ann_ft_dr_spaam_e20.pth").value)
         self.conf_thresh    = self.declare_parameter("conf_thresh", 0.5).value
         self.stride         = self.declare_parameter("stride", 1).value
         self.use_gpu        = self.declare_parameter("use_gpu", False).value
-        self.detector_model = self.declare_parameter("detector_model", "default_model").value
+        self.detector_model = self.declare_parameter("detector_model", "DR-SPAAM").value
         self.panoramic_scan = self.declare_parameter("panoramic_scan", False).value
-        self.detect_mode    = self.declare_parameter("detect_mode", False).value
+        self.detect_mode    = self.declare_parameter("detect_mode", True).value
 
     def _init(self):
         """
         @brief      Initialize ROS connection.
         """
-        # QoS profile with Transient Local durability for latching behavior
-        # qos_profile = QoSProfile(depth=10)
-        # qos_profile.durability = QoSDurabilityPolicy.TRANSIENT_LOCAL
-        qos_profile = QoSProfile(
-            durability=QoSDurabilityPolicy.VOLATILE,
-            reliability=QoSReliabilityPolicy.BEST_EFFORT,
-            history=QoSHistoryPolicy.KEEP_LAST,
-            depth=10
-        )
+        qos_policy = rclpy.qos.QoSProfile(reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT,
+                                          history=rclpy.qos.HistoryPolicy.KEEP_LAST,
+                                          depth=1)
 
         # Publisher
         # det_topic, det_queue_size = read_publisher_param(self, "detections")
         det_topic = "/dr_spaam_detections"
         self._dets_pub = self.create_publisher(
-            PoseArray, det_topic, qos_profile
+            PoseArray, det_topic, qos_policy,
         )
 
         # rviz_topic, rviz_queue_size = read_publisher_param(self, "rviz")
         rviz_topic = "/dr_spaam_rviz"
         self._rviz_pub = self.create_publisher(
-            Marker, rviz_topic, qos_profile
+            Marker, rviz_topic, qos_policy,
         )
 
         # Subscriber
@@ -76,7 +71,7 @@ class DrSpaamROS(Node):
         # scan_topic = "/scan"
         scan_topic = "/kachaka/lidar/scan"
         self._scan_sub = self.create_subscription(
-            LaserScan, scan_topic, self._scan_callback, qos_profile
+            LaserScan, scan_topic, self._scan_callback, qos_policy,
         )
 
         # Service
@@ -117,9 +112,6 @@ class DrSpaamROS(Node):
         scan[scan == 0.0] = 29.99
         scan[np.isinf(scan)] = 29.99
         scan[np.isnan(scan)] = 29.99
-
-        print(f"scan shape: {scan.shape}")
-        # print(f"scan_phi shape: {self._detector._scan_phi.shape}")
 
         # t = time.time()
         dets_xy, dets_cls, _ = self._detector(scan)
