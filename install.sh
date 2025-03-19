@@ -43,7 +43,7 @@ sudo apt-get install -y \
 
 # Clone sobits_msgs
 cd ..
-git clone https://github.com/TeamSOBITS/sobits_msgs/
+git clone -b humble-devel https://github.com/TeamSOBITS/sobits_msgs/
 cd $DIR
 
 

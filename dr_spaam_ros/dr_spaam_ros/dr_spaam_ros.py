@@ -9,7 +9,7 @@ from ament_index_python.packages import get_package_share_directory
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Point, Pose, PoseArray
 from visualization_msgs.msg import Marker
-from sobits_msgs.srv import RunCtrl
+from sobits_interfaces.srv import RunCtrl
 
 from dr_spaam.detector import Detector
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSReliabilityPolicy, QoSHistoryPolicy
