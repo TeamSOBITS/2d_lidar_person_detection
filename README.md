@@ -83,8 +83,8 @@
 
 | System  | Version |
 | ------------- | ------------- |
-| Ubuntu | 20.04 (Focal Fossa) |
-| ROS | Noetic Ninjemys |
+| Ubuntu | 22.04 (Jammy Jellyfish) |
+| ROS | Humble Hawksbill |
 | Python | 3.8 |
 | PyTorch | 2.2.1 (Tested) |
 
@@ -98,13 +98,11 @@
 
 1. ROSの`src`フォルダに移動します．
    ```sh
-   $ roscd
-   # もしくは，"cd ~/catkin_ws/"へ移動．
-   $ cd src/
+   $ cd ~/colcon_ws/src/
    ```
 2. 本レポジトリをcloneします．
    ```sh
-   $ git clone https://github.com/TeamSOBITS/2d_lidar_person_detection
+   $ git clone -b humble-devel https://github.com/TeamSOBITS/2d_lidar_person_detection
    ```
 3. レポジトリの中へ移動します．
    ```sh
@@ -116,9 +114,9 @@
    ```
 5. パッケージをコンパイルします．
    ```sh
-   $ roscd
-   # もしくは，"cd ~/catkin_ws/"へ移動．
-   $ catkin_make
+   $ cd ~/colcon_ws
+   $ colcon build --symlink-install
+   $ source ~/colcon_ws/install/setup.sh
    ```
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
@@ -157,7 +155,7 @@
     ```
 3. [dr_spaam_ros.launch](dr_spaam_ros/launch/dr_spaam_ros.launch)というlaunchファイルを実行します．
     ```sh
-   $ roslaunch dr_spaam_ros dr_spaam_ros.launch
+   $ ros2 launch dr_spaam_ros dr_spaam_ros.launch
     ```
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
@@ -193,10 +191,10 @@
 <!-- マイルストーン -->
 ## マイルストーン
 
-- [x] 検出機能のサービス化
-- [x] OSS
-    - [x] ドキュメンテーションの充実
-    - [x] コーディングスタイルの統一
+- [○] 検出機能のサービス化
+- [○] OSS
+    - [○] ドキュメンテーションの充実
+    - [○] コーディングスタイルの統一
 
 現時点のバッグや新規機能の依頼を確認するために[Issueページ][issues-url] をご覧ください．
 
@@ -234,7 +232,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more NOTErmation.
 * [DROW3](https://arxiv.org/abs/1804.02463)
 * [DR-SPAAM](https://arxiv.org/abs/2004.14079)
 * [ 2D_lidar_person_detection(official)](https://github.com/VisualComputingInstitute/2D_lidar_person_detection)
-* [ROS Noetic](http://wiki.ros.org/noetic)
+* [ROS 2 Humble](https://docs.ros.org/en/humble/)
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 

@@ -82,8 +82,8 @@ First, please set up the following environment before proceeding to the next ins
 
 | System  | Version |
 | --- | --- |
-| Ubuntu  | 20.04 (Focal Fossa) |
-| ROS     | Noetic Ninjemys |
+| Ubuntu  | 22.04 (Jammy Jellyfish) |
+| ROS     | Humble Hawksbill |
 | Python  | 3.8 |
 | PyTorch | 2.2.1 (Tested) |
 
@@ -97,13 +97,11 @@ First, please set up the following environment before proceeding to the next ins
 
 1. Go to the `src` folder of ROS.
    ```sh
-   $ roscd
-   # Or just use "cd ~/catkin_ws/" and change directory.
-   $ cd src/
+   $ cd ~/colcon_ws/src/
    ```
 2. Clone this repository.
    ```sh
-   $ git clone https://github.com/TeamSOBITS/2d_lidar_person_detection
+   $ git clone -b humble-devel https://github.com/TeamSOBITS/2d_lidar_person_detection
    ```
 3. Navigate into the repository.
    ```sh
@@ -115,9 +113,9 @@ First, please set up the following environment before proceeding to the next ins
    ```
 5. Compile the package.
    ```sh
-   $ roscd
-   # Or just use "cd ~/catkin_ws/" and change directory.
-   $ catkin_make
+   $ cd ~/colcon_ws
+   $ colcon build --symlink-install
+   $ source ~/colcon_ws/install/setup.sh
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -191,8 +189,8 @@ First, please set up the following environment before proceeding to the next ins
 
 <!-- MILESTONE -->
 ## Milestone
-- [x] Implement service (turn on/off detection)
-- [x] OSS
+- [○] Implement service (turn on/off detection)
+- [○] OSS
     - [x] Improved documentation
     - [x] Unified coding style
 
@@ -232,7 +230,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 * [DROW3](https://arxiv.org/abs/1804.02463)
 * [DR-SPAAM](https://arxiv.org/abs/2004.14079)
 * [ 2D_lidar_person_detection(official)](https://github.com/VisualComputingInstitute/2D_lidar_person_detection)
-* [ROS Noetic](http://wiki.ros.org/noetic)
+* [ROS 2 Humble](https://docs.ros.org/en/humble/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
