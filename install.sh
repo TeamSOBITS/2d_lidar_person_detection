@@ -47,4 +47,4 @@ git clone https://github.com/TeamSOBITS/sobits_msgs/
 cd $DIR
 
 
-echo "╚══╣ Setup: SOBIT PRO (FINISHED) ╠══╝"
+echo "╚══╣ Setup: 2d_lidar_person_detection (FINISHED) ╠══╝"
