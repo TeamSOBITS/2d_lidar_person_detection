@@ -42,7 +42,7 @@ sudo apt-get install -y \
     ros-$ROS_DISTRO-visualization-msgs \
 
 # Clone sobits_msgs
-cd ..
+cd ~/colcon_ws/src/
 git clone -b humble-devel https://github.com/TeamSOBITS/sobits_msgs/
 cd $DIR
 
