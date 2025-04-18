@@ -36,8 +36,7 @@ class DrSpaamROS(Node):
         """
         package_share_directory = get_package_share_directory('dr_spaam_ros')
 
-        # self.weight_file    = os.path.join(package_share_directory, "weights", self.declare_parameter("weight_file", "default_weight_file").value)
-        self.weight_file    = os.path.join("..", "weights", self.declare_parameter("weight_file", "ckpt_jrdb_ann_ft_dr_spaam_e20.pth").value)
+        self.weight_file    = os.path.join(package_share_directory, "weights", self.declare_parameter("weight_file", "ckpt_jrdb_ann_ft_dr_spaam_e20.pth").value)
         self.conf_thresh    = self.declare_parameter("conf_thresh", 0.5).value
         self.stride         = self.declare_parameter("stride", 1).value
         self.use_gpu        = self.declare_parameter("use_gpu", False).value
@@ -49,7 +48,7 @@ class DrSpaamROS(Node):
         """
         @brief      Initialize ROS connection.
         """
-        qos_policy = rclpy.qos.QoSProfile(reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT,
+        qos_policy = rclpy.qos.QoSProfile(reliability=rclpy.qos.ReliabilityPolicy.RELIABLE,
                                           history=rclpy.qos.HistoryPolicy.KEEP_LAST,
                                           depth=1)
 
@@ -68,8 +67,7 @@ class DrSpaamROS(Node):
 
         # Subscriber
         # scan_topic, scan_queue_size = read_subscriber_param(self, "scan")
-        # scan_topic = "/scan"
-        scan_topic = "/kachaka/lidar/scan"
+        scan_topic = "/scan"
         self._scan_sub = self.create_subscription(
             LaserScan, scan_topic, self._scan_callback, qos_policy,
         )
