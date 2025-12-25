@@ -4,8 +4,8 @@ echo "╔══╣ Setup: 2d_lidar_person_detection (STARTING) ╠══╗"
 
 
 # Download dependencies
-python3 -m pip install -U pip
-python3 -m pip install \
+python3 -m pip install -U pip --break-system-packages
+python3 -m pip install --break-system-packages \
     argparse \
     numpy \
     matplotlib \
@@ -18,12 +18,12 @@ python3 -m pip install \
     tensorboardX
 
 # Install PyTorch
-python3 -m pip install torch torchvision torchaudio
+python3 -m pip install torch torchvision torchaudio --break-system-packages
 
 # Install dr_spaam python package
 DIR="$( pwd )"
 cd dr_spaam
-sudo python3 -m pip install .
+sudo python3 -m pip install . --break-system-packages
 cd $DIR
 
 # Download weight files
@@ -32,8 +32,8 @@ python3 -m gdown https://drive.google.com/drive/folders/1OI99VfUBkmRSijgmMYYku9P
     --folder
 
 # Download ROS dependencies
-sudo apt-get update
-sudo apt-get install -y \
+sudo apt update
+sudo apt install -y \
     ros-$ROS_DISTRO-rosbag2 \
     ros-$ROS_DISTRO-tf2 \
     ros-$ROS_DISTRO-tf2-ros \
