@@ -44,6 +44,8 @@ sudo apt-get install -y \
 # Clone sobits_interfaces
 cd ~/colcon_ws/src/
 git clone -b $ROS_DISTRO-devel https://github.com/TeamSOBITS/sobits_interfaces/
+cd sobits_interfaces
+bash install.sh
 cd $DIR
 
 
