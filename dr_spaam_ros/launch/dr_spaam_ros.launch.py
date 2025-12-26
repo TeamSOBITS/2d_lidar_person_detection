@@ -56,10 +56,10 @@ def generate_launch_description():
         output="screen"
     )
 
-    return LaunchDescription(
+    return LaunchDescription([
         param_file_arg,
         scan_topic_name_arg,
         execute_default_arg,
         namespace_arg,
         dr_spaam_node_cmd,
-    )
+    ])
