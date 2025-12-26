@@ -9,7 +9,7 @@ from ament_index_python.packages import get_package_share_directory
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Point, Pose, PoseArray
 from visualization_msgs.msg import Marker
-from sobits_interfaces.srv import RunCtrl
+from std_srvs.srv import SetBool
 
 from dr_spaam.detector import Detector
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSReliabilityPolicy, QoSHistoryPolicy
@@ -37,56 +37,57 @@ class DrSpaamROS(Node):
         package_share_directory = get_package_share_directory('dr_spaam_ros')
 
         self.weight_file    = os.path.join(package_share_directory, "weights", self.declare_parameter("weight_file", "ckpt_jrdb_ann_ft_dr_spaam_e20.pth").value)
+        self.detector_model = self.declare_parameter("detector_model", "DR-SPAAM").value
+        self.use_gpu        = self.declare_parameter("use_gpu", False).value
         self.conf_thresh    = self.declare_parameter("conf_thresh", 0.5).value
         self.stride         = self.declare_parameter("stride", 1).value
-        self.use_gpu        = self.declare_parameter("use_gpu", False).value
-        self.detector_model = self.declare_parameter("detector_model", "DR-SPAAM").value
         self.panoramic_scan = self.declare_parameter("panoramic_scan", False).value
-        self.detect_mode    = self.declare_parameter("detect_mode", True).value
+        self.queue_size     = self.declare_parameter("queue_size", 1).value
+
+        self.scan_topic     = self.declare_parameter("scan_topic_name", "/scan").value
+        self.detect_mode    = self.declare_parameter("execute_default", True).value
 
     def _init(self):
         """
         @brief      Initialize ROS connection.
         """
-        qos_policy = rclpy.qos.QoSProfile(reliability=rclpy.qos.ReliabilityPolicy.RELIABLE,
-                                          history=rclpy.qos.HistoryPolicy.KEEP_LAST,
-                                          depth=1)
-
-        # Publisher
-        # det_topic, det_queue_size = read_publisher_param(self, "detections")
-        det_topic = "/dr_spaam_detections"
-        self._dets_pub = self.create_publisher(
-            PoseArray, det_topic, qos_policy,
+        qos_policy = rclpy.qos.QoSProfile(
+            reliability=rclpy.qos.ReliabilityPolicy.RELIABLE,
+            # reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT,
+            history=rclpy.qos.HistoryPolicy.KEEP_LAST,
+            depth=1
         )
 
-        # rviz_topic, rviz_queue_size = read_publisher_param(self, "rviz")
-        rviz_topic = "/dr_spaam_rviz"
+        # Publisher
+        self._dets_pub = self.create_publisher(
+            PoseArray, "dr_spaam_detections", qos_policy,
+        )
+
         self._rviz_pub = self.create_publisher(
-            Marker, rviz_topic, qos_policy,
+            Marker, "dr_spaam_rviz", qos_policy,
         )
 
         # Subscriber
-        # scan_topic, scan_queue_size = read_subscriber_param(self, "scan")
-        scan_topic = "/scan"
         self._scan_sub = self.create_subscription(
-            LaserScan, scan_topic, self._scan_callback, qos_policy,
+            LaserScan, self.scan_topic, self._scan_callback, qos_policy,
         )
 
         # Service
         self._run_ctrl_srv = self.create_service(
-            RunCtrl, "/run_ctrl", self._run_ctrl_callback
+            SetBool, "dr_spaam_ros/run_ctr", self._run_ctrl_callback
         )
 
     def _run_ctrl_callback(self, request, response):
         """
         @brief      Callback function for service call.
         """
-        if request.request == True:
-            response.detect_mode = True
-        elif request.request == False:
-            response.detect_mode = False
+        if ((request.data == True) or (request.data == False)):
+            response.success = True
+            self.detect_mode = request.data
         else:
-            self.get_logger().debug("[DrSpaamROS] Unknown command: %d" % request.request)
+            response.success = False
+            self.detect_mode = False
+            self.get_logger().debug("[DrSpaamROS] Unknown command: %d" % request.data)
 
         return response
 
@@ -111,9 +112,7 @@ class DrSpaamROS(Node):
         scan[np.isinf(scan)] = 29.99
         scan[np.isnan(scan)] = 29.99
 
-        # t = time.time()
         dets_xy, dets_cls, _ = self._detector(scan)
-        # print("[DrSpaamROS] End-to-end inference time: %f" % (t - time.time()))
 
         # confidence threshold
         conf_mask = (dets_cls >= self.conf_thresh).reshape(-1)
@@ -189,24 +188,6 @@ def detections_to_pose_array(dets_xy, dets_cls):
         pose_array.poses.append(p)
 
     return pose_array
-
-
-# def read_subscriber_param(node, name):
-#     """
-#     @brief      Convenience function to read subscriber parameter.
-#     """
-#     topic = node.declare_parameter(f"subscriber/{name}/topic", "default_topic").value
-#     queue_size = node.declare_parameter(f"subscriber/{name}/queue_size", 10).value
-#     return topic, queue_size
-
-
-# def read_publisher_param(node, name):
-#     """
-#     @brief      Convenience function to read publisher parameter.
-#     """
-#     topic = node.declare_parameter(f"publisher/{name}/topic", "default_topic").value
-#     queue_size = node.declare_parameter(f"publisher/{name}/queue_size", 10).value
-#     return topic, queue_size
 
 
 def main(args=None):
