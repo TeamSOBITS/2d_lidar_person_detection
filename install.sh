@@ -17,6 +17,8 @@ python3 -m pip install \
     python-lzf \
     tensorboardX
 
+pip3 install "numpy<2"
+
 # Install PyTorch
 python3 -m pip install torch torchvision torchaudio
 
