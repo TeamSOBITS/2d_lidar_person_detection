@@ -26,7 +26,7 @@ def generate_launch_description():
     execute_default_arg = DeclareLaunchArgument(
         "execute_default",
         description="Set to True to enable initialize detection",
-        default_value="/scan",
+        default_value="True",
     )
 
     namespace_arg = DeclareLaunchArgument(
