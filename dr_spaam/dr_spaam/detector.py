@@ -24,7 +24,7 @@ class Detector(object):
         self._use_dr_spaam = model == "DR-SPAAM"
 
         self._scan_phi = None
-        self._laser_fov_deg = None
+        self._laser_fov = None
 
         if model == "DROW3":
             self._model = DrowNet(
@@ -49,7 +49,9 @@ class Detector(object):
                 )
             )
 
-        ckpt = torch.load(ckpt_file)
+        if (self._gpu): ckpt = torch.load(ckpt_file)
+        else:           ckpt = torch.load(ckpt_file, map_location=torch.device('cpu'))
+
         self._model.load_state_dict(ckpt["model_state"])
 
         self._model.eval()
@@ -60,7 +62,7 @@ class Detector(object):
     def __call__(self, scan):
         if self._scan_phi is None:
             assert self.is_ready(), "Call set_laser_fov() first."
-            half_fov_rad = 0.5 * np.deg2rad(self._laser_fov_deg)
+            half_fov_rad = 0.5 * self._laser_fov
             self._scan_phi = np.linspace(
                 -half_fov_rad, half_fov_rad, len(scan), dtype=np.float32
             )
@@ -104,8 +106,8 @@ class Detector(object):
 
         return dets_xy, dets_cls, instance_mask
 
-    def set_laser_fov(self, fov_deg):
-        self._laser_fov_deg = fov_deg
+    def set_laser_fov(self, fov):
+        self._laser_fov = fov
 
     def is_ready(self):
-        return self._laser_fov_deg is not None
+        return self._laser_fov is not None
