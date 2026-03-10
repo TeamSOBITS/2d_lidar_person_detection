@@ -119,8 +119,9 @@ class DrSpaamROS(Node):
         dets_xy = dets_xy[conf_mask]
 
         for i in range(len(dets_xy)):
-            dets_xy[i][0] = dets_xy[i][0] * np.cos(offset_ang) - dets_xy[i][1] * np.sin(offset_ang)
-            dets_xy[i][1] = dets_xy[i][0] * np.sin(offset_ang) + dets_xy[i][1] * np.cos(offset_ang)
+            xy = dets_xy[i]
+            dets_xy[i][0] = xy[0] * np.cos(offset_ang) - xy[1] * np.sin(offset_ang)
+            dets_xy[i][1] = xy[0] * np.sin(offset_ang) + xy[1] * np.cos(offset_ang)
 
         # convert to ros msg and publish
         dets_msg = detections_to_pose_array(dets_xy)
@@ -152,7 +153,7 @@ def detections_to_rviz_marker(dets_xy):
     msg.scale.x = 0.03  # line width
     # red color
     msg.color.r = 1.0
-    msg.color.g = 1.0
+    msg.color.g = 0.0
     msg.color.b = 0.0
     msg.color.a = 1.0
 
