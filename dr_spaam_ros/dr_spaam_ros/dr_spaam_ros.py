@@ -52,8 +52,8 @@ class DrSpaamROS(Node):
         @brief      Initialize ROS connection.
         """
         qos_policy = rclpy.qos.QoSProfile(
-            reliability=rclpy.qos.ReliabilityPolicy.RELIABLE,
-            # reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT,
+            # reliability=rclpy.qos.ReliabilityPolicy.RELIABLE,
+            reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT,
             history=rclpy.qos.HistoryPolicy.KEEP_LAST,
             depth=1
         )
@@ -103,9 +103,7 @@ class DrSpaamROS(Node):
 
         # TODO check the computation here
         if not self._detector.is_ready():
-            self._detector.set_laser_fov(
-                np.rad2deg(msg.angle_increment * len(msg.ranges))
-            )
+            self._detector.set_laser_fov(msg.angle_increment * len(msg.ranges))
 
         scan = np.array(msg.ranges)
         scan[scan == 0.0] = 29.99
@@ -114,22 +112,28 @@ class DrSpaamROS(Node):
 
         dets_xy, dets_cls, _ = self._detector(scan)
 
+        offset_ang = (msg.angle_max + msg.angle_min) / 2.0
+
         # confidence threshold
         conf_mask = (dets_cls >= self.conf_thresh).reshape(-1)
         dets_xy = dets_xy[conf_mask]
-        dets_cls = dets_cls[conf_mask]
+
+        for i in range(len(dets_xy)):
+            xy = dets_xy[i]
+            dets_xy[i][0] = xy[0] * np.cos(offset_ang) - xy[1] * np.sin(offset_ang)
+            dets_xy[i][1] = xy[0] * np.sin(offset_ang) + xy[1] * np.cos(offset_ang)
 
         # convert to ros msg and publish
-        dets_msg = detections_to_pose_array(dets_xy, dets_cls)
+        dets_msg = detections_to_pose_array(dets_xy)
         dets_msg.header = msg.header
         self._dets_pub.publish(dets_msg)
 
-        rviz_msg = detections_to_rviz_marker(dets_xy, dets_cls)
+        rviz_msg = detections_to_rviz_marker(dets_xy)
         rviz_msg.header = msg.header
         self._rviz_pub.publish(rviz_msg)
 
 
-def detections_to_rviz_marker(dets_xy, dets_cls):
+def detections_to_rviz_marker(dets_xy):
     """
     @brief     Convert detection to RViz marker msg. Each detection is marked as
                a circle approximated by line segments.
@@ -149,6 +153,8 @@ def detections_to_rviz_marker(dets_xy, dets_cls):
     msg.scale.x = 0.03  # line width
     # red color
     msg.color.r = 1.0
+    msg.color.g = 0.0
+    msg.color.b = 0.0
     msg.color.a = 1.0
 
     # circle
@@ -157,7 +163,7 @@ def detections_to_rviz_marker(dets_xy, dets_cls):
     xy_offsets = r * np.stack((np.cos(ang), np.sin(ang)), axis=1)
 
     # to msg
-    for d_xy, d_cls in zip(dets_xy, dets_cls):
+    for d_xy in dets_xy:
         for i in range(len(xy_offsets) - 1):
             # start point of a segment
             p0 = Point()
@@ -176,9 +182,9 @@ def detections_to_rviz_marker(dets_xy, dets_cls):
     return msg
 
 
-def detections_to_pose_array(dets_xy, dets_cls):
+def detections_to_pose_array(dets_xy):
     pose_array = PoseArray()
-    for d_xy, d_cls in zip(dets_xy, dets_cls):
+    for d_xy in dets_xy:
         # Detector uses following frame convention:
         # x forward, y rightward, z downward, phi is angle w.r.t. x-axis
         p = Pose()
