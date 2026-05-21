@@ -186,7 +186,6 @@ $ ros2 topic info /scan --verbose
 | `stride` | scan の間引き幅 | `1` |
 | `panoramic_scan` | 360 度 scan かどうか | `False` |
 | `scan_topic_name` | 入力 `LaserScan` topic 名 | `/scan` |
-| `execute_default` | 検出を有効な状態で開始するか | `True` |
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
@@ -209,11 +208,14 @@ $ ros2 topic info /scan --verbose
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
 
-### Services
+### Lifecycle Control
 
-| サービス名 | 型 | 意味 |
-| --- | --- | --- |
-| /dr_spaam_ros/run_ctr | std_srvs/SetBool | 人物検出の切り替え (ON:`true`, OFF:`false`) |
+人物検出の有効化 / 無効化は lifecycle で行います．
+
+```sh
+$ ros2 lifecycle set /dr_spaam_ros deactivate
+$ ros2 lifecycle set /dr_spaam_ros activate
+```
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
@@ -221,7 +223,7 @@ $ ros2 topic info /scan --verbose
 <!-- マイルストーン -->
 ## マイルストーン
 
-- [○] 検出機能のサービス化
+- [○] lifecycle node への対応
 - [○] OSS
     - [○] ドキュメンテーションの充実
     - [○] コーディングスタイルの統一

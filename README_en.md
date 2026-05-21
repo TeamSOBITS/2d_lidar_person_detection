@@ -186,7 +186,6 @@ $ ros2 topic info /scan --verbose
 | `stride` | Scan downsampling stride | `1` |
 | `panoramic_scan` | Whether the scan covers 360 degrees | `False` |
 | `scan_topic_name` | Input `LaserScan` topic name | `/scan` |
-| `execute_default` | Whether detection starts enabled | `True` |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -209,18 +208,21 @@ $ ros2 topic info /scan --verbose
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-### Services
+### Lifecycle Control
 
-| Service | Type | Meaning |
-| --- | --- | --- |
-| /dr_spaam_ros/run_ctr | std_srvs/SetBool | Toggle person detection (ON:`true`, OFF:`false`) |
+Use lifecycle transitions to stop or resume detection.
+
+```sh
+$ ros2 lifecycle set /dr_spaam_ros deactivate
+$ ros2 lifecycle set /dr_spaam_ros activate
+```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 <!-- MILESTONE -->
 ## Milestone
-- [○] Implement service (turn on/off detection)
+- [○] Support lifecycle node control
 - [○] OSS
     - [x] Improved documentation
     - [x] Unified coding style
@@ -260,7 +262,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 * [DROW3](https://arxiv.org/abs/1804.02463)
 * [DR-SPAAM](https://arxiv.org/abs/2004.14079)
-* [ 2D_lidar_person_detection(official)](https://github.com/VisualComputingInstitute/2D_lidar_person_detection)
+* [2D_lidar_person_detection(official)](https://github.com/VisualComputingInstitute/2D_lidar_person_detection)
 * [ROS 2 Humble](https://docs.ros.org/en/humble/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
