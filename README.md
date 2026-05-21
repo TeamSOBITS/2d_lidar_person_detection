@@ -125,38 +125,68 @@
 <!-- 実行・操作方法 -->
 ## 実行・操作方法
 
-1. [dr_spaam_ros.yaml](dr_spaam_ros/config/dr_spaam_ros.yaml)のパラメータを設定する．
+1. [dr_spaam_param.yaml](dr_spaam_ros/config/dr_spaam_param.yaml)のパラメータを設定します．
     ```yaml
     weight_file: "ckpt_jrdb_ann_ft_dr_spaam_e20.pth" # Name of the weight file
-    detector_model: "DR-SPAAM"  # Set model name: DROW3 or DR-SPAAM
-    use_gpu: True     # Set to True to use GPU
-    conf_thresh: 0.5  # Set confidence threshold
-    stride: 1         # Downsample scans for faster inference
-    panoramic_scan: False  # Set to True if the scan covers 360 degree
-    detect_mode: True # Set detection mode when launching
+    detector_model: "DR-SPAAM"                # DROW3 または DR-SPAAM
+    use_gpu: True                             # GPU を使う場合は True
+    conf_thresh: 0.9                          # 検出信頼度のしきい値
+    stride: 1                                 # scan の間引き幅
+    panoramic_scan: false                     # 360 度 LiDAR の場合は true
+    queue_size: 1
     ```
-2. [topics.yaml](dr_spaam_ros/config/topics.yaml)のパラメータを設定する．
-    ```yaml
-    publisher:
-        detections:
-            topic: ~dr_spaam_detections
-            queue_size: 1
-            latch: false
-
-        rviz:
-            topic: ~dr_spaam_rviz
-            queue_size: 1
-            latch: false
-
-    subscriber:
-        scan:
-            topic: /scan
-            queue_size: 1
-    ```
-3. [dr_spaam_ros.launch](dr_spaam_ros/launch/dr_spaam_ros.launch)というlaunchファイルを実行します．
+2. 必要に応じて launch 引数を指定してノードを起動します．
     ```sh
-   $ ros2 launch dr_spaam_ros dr_spaam_ros.launch
+   $ ros2 launch dr_spaam_ros dr_spaam_ros.launch.py
     ```
+3. 起動時に lifecycle を自動遷移させない場合は，`auto_configure` / `auto_activate` を指定します．
+    ```sh
+    $ ros2 launch dr_spaam_ros dr_spaam_ros.launch.py auto_configure:=False auto_activate:=False
+    ```
+4. 手動で lifecycle を遷移させる場合は，以下を実行します．
+    ```sh
+    $ ros2 lifecycle set /dr_spaam_ros configure
+    $ ros2 lifecycle set /dr_spaam_ros activate
+    ```
+5. scan topic が namespace 付きの場合は，明示的に指定します．
+    ```sh
+    $ ros2 launch dr_spaam_ros dr_spaam_ros.launch.py scan_topic_name:=/sobit_home/lidar_scan
+    ```
+
+### Lifecycle と QoS に関する注意
+
+- `dr_spaam_ros` は lifecycle node として動作します．
+- `configure` で Detector と Publisher を生成し，`activate` で `LaserScan` の Subscriber を生成します．
+- `LaserScan` は `qos_profile_sensor_data` (`BEST_EFFORT`) で購読します．
+- そのため，多くの ROS 2 LiDAR ドライバと QoS 互換を保てます．
+
+Publisher 側の QoS を確認したい場合:
+```sh
+$ ros2 topic info /scan --verbose
+```
+
+### 主な launch 引数
+
+| 引数 | 説明 | デフォルト |
+| --- | --- | --- |
+| `param_file` | パラメータ YAML のパス | `dr_spaam_ros/config/dr_spaam_param.yaml` |
+| `scan_topic_name` | 入力 `LaserScan` topic | `/scan` |
+| `namespace` | ノード namespace | `""` |
+| `auto_configure` | 起動時に configure する | `True` |
+| `auto_activate` | 起動時に activate する | `True` |
+
+### 主な ROS パラメータ
+
+| パラメータ | 説明 | デフォルト |
+| --- | --- | --- |
+| `weight_file` | `weights/` 以下の重みファイル名 | `ckpt_jrdb_ann_ft_dr_spaam_e20.pth` |
+| `detector_model` | `DROW3` または `DR-SPAAM` | `DR-SPAAM` |
+| `use_gpu` | GPU 推論を使うか | `False` |
+| `conf_thresh` | 検出信頼度のしきい値 | `0.5` |
+| `stride` | scan の間引き幅 | `1` |
+| `panoramic_scan` | 360 度 scan かどうか | `False` |
+| `scan_topic_name` | 入力 `LaserScan` topic 名 | `/scan` |
+| `execute_default` | 検出を有効な状態で開始するか | `True` |
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
@@ -167,13 +197,13 @@
 
 | トピック名 | 型 | 意味 |
 | --- | --- | --- |
-| /scan | sensor_msgs/LaserScan | LiDARのスキャン情報 |
+| `/scan` または `scan_topic_name` で指定した topic | sensor_msgs/LaserScan | LiDARのスキャン情報 |
 
 - Publishers:
 
 | トピック名 | 型 | 意味 |
 | --- | --- | --- |
-| /dr_spaam_ros/dr_spaam_detections | geometry_msgs/PoseArray   | 3次元位置検出結果の配列 | 
+| /dr_spaam_ros/dr_spaam_detections | geometry_msgs/PoseArray   | 人物検出結果 | 
 | /dr_spaam_ros/dr_spaam_rviz       | visualization_msgs/Marker | RViz上の結果の可視化 |
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
@@ -183,7 +213,7 @@
 
 | サービス名 | 型 | 意味 |
 | --- | --- | --- |
-| /dr_spaam_ros/run_ctrl | sobits_msgs/RunCtrl | 3次元位置検出の切り替え (ON:`true`, OFF:`false`) |
+| /dr_spaam_ros/run_ctr | std_srvs/SetBool | 人物検出の切り替え (ON:`true`, OFF:`false`) |
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 

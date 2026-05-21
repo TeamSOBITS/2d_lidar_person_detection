@@ -124,38 +124,69 @@ First, please set up the following environment before proceeding to the next ins
 <!-- LAUNCH AND USAGE EXAMPLES -->
 ## Launch and Usage
 
-1. Set the parameters inside [dr_spaam_ros.yaml](dr_spaam_ros/config/dr_spaam_ros.yaml).
+1. Set the parameters in [dr_spaam_param.yaml](dr_spaam_ros/config/dr_spaam_param.yaml).
     ```yaml
     weight_file: "ckpt_jrdb_ann_ft_dr_spaam_e20.pth" # Name of the weight file
-    detector_model: "DR-SPAAM"  # Set model name: DROW3 or DR-SPAAM
-    use_gpu: True     # Set to True to use GPU
-    conf_thresh: 0.5  # Set confidence threshold
-    stride: 1         # Downsample scans for faster inference
-    panoramic_scan: False  # Set to True if the scan covers 360 degree
-    detect_mode: True # Set detection mode when launching
+    detector_model: "DR-SPAAM"                # DROW3 or DR-SPAAM
+    use_gpu: True                             # Set to True to use GPU
+    conf_thresh: 0.9                          # Set confidence threshold
+    stride: 1                                 # Downsample scans for faster inference
+    panoramic_scan: false                     # Set to true for 360-degree scans
+    queue_size: 1
     ```
-2. Set the parameters inside [topics.yaml](dr_spaam_ros/config/topics.yaml).
-    ```yaml
-    publisher:
-        detections:
-            topic: ~dr_spaam_detections
-            queue_size: 1
-            latch: false
-
-        rviz:
-            topic: ~dr_spaam_rviz
-            queue_size: 1
-            latch: false
-
-    subscriber:
-        scan:
-            topic: /scan
-            queue_size: 1
-    ```
-3. Execute the launch file [dr_spaam_ros.launch](dr_spaam_ros/launch/dr_spaam_ros.launch).
+2. Launch the node, optionally overriding launch arguments.
    ```sh
-   $ roslaunch dr_spaam_ros dr_spaam_ros.launch
+   $ ros2 launch dr_spaam_ros dr_spaam_ros.launch.py
    ```
+3. If you do not want automatic lifecycle transitions on startup, set `auto_configure` / `auto_activate`.
+    ```sh
+    $ ros2 launch dr_spaam_ros dr_spaam_ros.launch.py auto_configure:=False auto_activate:=False
+    ```
+4. For manual lifecycle control, run:
+    ```sh
+    $ ros2 lifecycle set /dr_spaam_ros configure
+    $ ros2 lifecycle set /dr_spaam_ros activate
+    ```
+5. If your LiDAR topic is namespaced, pass it explicitly.
+    ```sh
+    $ ros2 launch dr_spaam_ros dr_spaam_ros.launch.py scan_topic_name:=/sobit_home/lidar_scan
+    ```
+
+### Lifecycle and QoS Notes
+
+- `dr_spaam_ros` now runs as a lifecycle node.
+- The detector and publishers are created during `configure`.
+- The `LaserScan` subscription is created during `activate`.
+- The `LaserScan` subscriber uses `qos_profile_sensor_data` (`BEST_EFFORT`).
+- This matches most ROS 2 LiDAR drivers and avoids QoS reliability mismatches.
+
+To inspect the publisher QoS:
+```sh
+$ ros2 topic info /scan --verbose
+```
+
+### Main Launch Arguments
+
+| Argument | Description | Default |
+| --- | --- | --- |
+| `param_file` | Path to the parameter YAML file | `dr_spaam_ros/config/dr_spaam_param.yaml` |
+| `scan_topic_name` | Input `LaserScan` topic | `/scan` |
+| `namespace` | Node namespace | `""` |
+| `auto_configure` | Configure on startup | `True` |
+| `auto_activate` | Activate on startup | `True` |
+
+### Main ROS Parameters
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| `weight_file` | Weight filename under `weights/` | `ckpt_jrdb_ann_ft_dr_spaam_e20.pth` |
+| `detector_model` | `DROW3` or `DR-SPAAM` | `DR-SPAAM` |
+| `use_gpu` | Whether to use GPU inference | `False` |
+| `conf_thresh` | Detection confidence threshold | `0.5` |
+| `stride` | Scan downsampling stride | `1` |
+| `panoramic_scan` | Whether the scan covers 360 degrees | `False` |
+| `scan_topic_name` | Input `LaserScan` topic name | `/scan` |
+| `execute_default` | Whether detection starts enabled | `True` |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -166,13 +197,13 @@ First, please set up the following environment before proceeding to the next ins
 
 | Topic | Type | Meaning |
 | --- | --- | --- |
-| /scan | sensor_msgs/LaserScan | LiDAR scan data |
+| `/scan` or the topic passed by `scan_topic_name` | sensor_msgs/LaserScan | LiDAR scan data |
 
 - Publishers:
 
 | Topic | Type | Meaning |
 | --- | --- | --- |
-| /dr_spaam_ros/dr_spaam_detections | geometry_msgs/PoseArray   | 3D position detection result array | 
+| /dr_spaam_ros/dr_spaam_detections | geometry_msgs/PoseArray   | Person detection result array | 
 | /dr_spaam_ros/dr_spaam_rviz       | visualization_msgs/Marker | Result Visualization over RViz |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -182,7 +213,7 @@ First, please set up the following environment before proceeding to the next ins
 
 | Service | Type | Meaning |
 | --- | --- | --- |
-| /dr_spaam_ros/run_ctrl | sobits_msgs/RunCtrl | 3D position detection toogle (ON:`true`, OFF:`false`) |
+| /dr_spaam_ros/run_ctr | std_srvs/SetBool | Toggle person detection (ON:`true`, OFF:`false`) |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
