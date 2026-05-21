@@ -23,22 +23,29 @@ def generate_launch_description():
         default_value="/scan",
     )
 
-    execute_default_arg = DeclareLaunchArgument(
-        "execute_default",
-        description="Set to True to enable initialize detection",
-        default_value="True",
-    )
-
     namespace_arg = DeclareLaunchArgument(
         "namespace",
         description="Namespace (default: Empty)",
         default_value="",
     )
 
+    auto_configure_arg = DeclareLaunchArgument(
+        "auto_configure",
+        description="Automatically configure the lifecycle node on startup",
+        default_value="True",
+    )
+
+    auto_activate_arg = DeclareLaunchArgument(
+        "auto_activate",
+        description="Automatically activate the lifecycle node on startup",
+        default_value="True",
+    )
+
     param_file = LaunchConfiguration("param_file")
     scan_topic_name = LaunchConfiguration("scan_topic_name")
-    execute_default = LaunchConfiguration("execute_default")
     namespace = LaunchConfiguration("namespace")
+    auto_configure = LaunchConfiguration("auto_configure")
+    auto_activate = LaunchConfiguration("auto_activate")
 
 
     dr_spaam_node_cmd = Node(
@@ -50,7 +57,8 @@ def generate_launch_description():
             param_file,
             {
                 "scan_topic_name": scan_topic_name,
-                "execute_default": execute_default,
+                "auto_configure": auto_configure,
+                "auto_activate": auto_activate,
             },
         ],
         output="screen"
@@ -59,7 +67,8 @@ def generate_launch_description():
     return LaunchDescription([
         param_file_arg,
         scan_topic_name_arg,
-        execute_default_arg,
         namespace_arg,
+        auto_configure_arg,
+        auto_activate_arg,
         dr_spaam_node_cmd,
     ])
