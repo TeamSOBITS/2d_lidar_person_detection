@@ -1,6 +1,6 @@
 <a name="readme-top"></a>
 
-[JA](README.md) | [EN](README_en.md)
+[EN](README.md) | [JA](README_ja.md)
 
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
@@ -10,44 +10,38 @@
 
 # Person Detection in 2D Range Data
 
-<!-- 目次 -->
+<!-- TABLE OF CONTENTS -->
 <details>
-  <summary>目次</summary>
+  <summary>Table of Contents</summary>
   <ol>
     <li>
-      <a href="#概要">概要</a>
+      <a href="#introduction">Introduction</a>
     </li>
     <li>
-      <a href="#環境構築">環境構築</a>
+      <a href="#getting-started">Getting Started</a>
       <ul>
-        <li><a href="#環境条件">環境条件</a></li>
-        <li><a href="#インストール方法">インストール方法</a></li>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
     <li>
-    　<a href="#実行操作方法">実行・操作方法</a>
+      <a href="#launch-and-usage">Launch and Usage</a>
       <ul>
         <li><a href="#subscribers--publishers">Subscribers & Publishers</a></li>
       </ul>
     </li>
-    <li>
-    <li><a href="#マイルストーン">マイルストーン</a></li>
-    <!-- <li><a href="#contributing">Contributing</a></li> -->
-    <!-- <li><a href="#license">License</a></li> -->
-    <li><a href="#参考文献">参考文献</a></li>
+    <li><a href="#milestone">Milestone</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
+## Introduction
 
-
-<!-- レポジトリの概要 -->
-## 概要
-
-本リポジトリには，足首や膝の高さに取り付けた2D LiDARを使ったリアルタイム人物検出器DROW3 ([arXiv](https://arxiv.org/abs/1804.02463)) とDR-SPAAM ([arXiv](https://arxiv.org/abs/2004.14079)) が実装されている．
-また，*Self-Supervised Person Detection in 2D Range Data using a Calibrated Camera* ([arXiv](https://arxiv.org/abs/2012.08890))の実験も含まれている．
+This repository implements DROW3 ([arXiv](https://arxiv.org/abs/1804.02463)) and DR-SPAAM ([arXiv](https://arxiv.org/abs/2004.14079)), real-time person detectors using 2D LiDARs mounted at ankle or knee height.
+Also included are experiments from *Self-Supervised Person Detection in 2D Range Data using a Calibrated Camera* ([arXiv](https://arxiv.org/abs/2012.08890)).
 
 <details>
-<summary>重みファイル一覧</summary>
+<summary>List of available weight files</summary>
 
 - ckpt_jrdb_ann_dr_spaam_e20.pth
 - ckpt_jrdb_ann_drow3_e40.pth
@@ -66,212 +60,171 @@
 
 ![](imgs/teaser_1.gif)
 
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## Getting Started
 
-<!-- セットアップ -->
-## セットアップ
+This section describes how to set up this repository.
 
-ここで，本レポジトリのセットアップ方法について説明します．
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
+### Prerequisites
 
-
-### 環境条件
-
-まず，以下の環境を整えてから，次のインストール段階に進んでください．
+First, please set up the following environment before proceeding to the next installation stage.
 
 | System  | Version |
-| ------------- | ------------- |
-| Ubuntu | 22.04 (Jammy Jellyfish) |
-| ROS | Humble Hawksbill |
-| Python | 3.8 |
+| --- | --- |
+| Ubuntu  | 22.04 (Jammy Jellyfish) |
+| ROS     | Humble Hawksbill |
+| Python  | 3.8 |
 | PyTorch | 2.2.1 (Tested) |
 
 > [!NOTE]
-> `Ubuntu`や`ROS`のインストール方法に関しては，[SOBITS Manual](https://github.com/TeamSOBITS/sobits_manual#%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)に参照してください．
+> If you need to install `Ubuntu` or `ROS`, please check our [SOBITS Manual](https://github.com/TeamSOBITS/sobits_manual#%E9%96%8B%E7%99%BA%E7%92%B0%E5%A2%83%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6).
 
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+### Installation
 
-### インストール方法
-
-1. ROSの`src`フォルダに移動します．
+1. Go to the `src` folder of ROS.
    ```sh
    $ cd ~/colcon_ws/src/
    ```
-2. 本レポジトリをcloneします．
+2. Clone this repository.
    ```sh
    $ git clone -b humble-devel https://github.com/TeamSOBITS/2d_lidar_person_detection
    ```
-3. レポジトリの中へ移動します．
+3. Navigate into the repository.
    ```sh
    $ cd 2d_lidar_person_detection/
    ```
-4. 依存パッケージをインストールします．
+4. Install the dependent packages.
    ```sh
    $ bash install.sh
    ```
-5. パッケージをコンパイルします．
+5. Compile the package.
    ```sh
    $ cd ~/colcon_ws
    $ colcon build --symlink-install
    $ source ~/colcon_ws/install/setup.sh
    ```
 
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## Launch and Usage
 
-<!-- 実行・操作方法 -->
-## 実行・操作方法
-
-1. [dr_spaam_param.yaml](dr_spaam_ros/config/dr_spaam_param.yaml)のパラメータを設定します．
+1. Set the parameters in [dr_spaam_param.yaml](dr_spaam_ros/config/dr_spaam_param.yaml).
     ```yaml
     weight_file: "ckpt_jrdb_ann_ft_dr_spaam_e20.pth" # Name of the weight file
-    detector_model: "DR-SPAAM"                # DROW3 または DR-SPAAM
-    use_gpu: True                             # GPU を使う場合は True
-    conf_thresh: 0.9                          # 検出信頼度のしきい値
-    stride: 1                                 # scan の間引き幅
-    panoramic_scan: false                     # 360 度 LiDAR の場合は true
+    detector_model: "DR-SPAAM"                # DROW3 or DR-SPAAM
+    use_gpu: True                             # Set to True to use GPU
+    conf_thresh: 0.9                          # Set confidence threshold
+    stride: 1                                 # Downsample scans for faster inference
+    panoramic_scan: false                     # Set to true for 360-degree scans
     queue_size: 1
     ```
-2. 必要に応じて launch 引数を指定してノードを起動します．
-    ```sh
+2. Launch the node, optionally overriding launch arguments.
+   ```sh
    $ ros2 launch dr_spaam_ros dr_spaam_ros.launch.py
-    ```
-3. 起動時に lifecycle を自動遷移させない場合は，`auto_configure` / `auto_activate` を指定します．
+   ```
+3. If you do not want automatic lifecycle transitions on startup, set `auto_configure` / `auto_activate`.
     ```sh
     $ ros2 launch dr_spaam_ros dr_spaam_ros.launch.py auto_configure:=False auto_activate:=False
     ```
-4. 手動で lifecycle を遷移させる場合は，以下を実行します．
+4. For manual lifecycle control, run:
     ```sh
     $ ros2 lifecycle set /dr_spaam_ros configure
     $ ros2 lifecycle set /dr_spaam_ros activate
     ```
-5. scan topic が namespace 付きの場合は，明示的に指定します．
+5. If your LiDAR topic is namespaced, pass it explicitly.
     ```sh
     $ ros2 launch dr_spaam_ros dr_spaam_ros.launch.py scan_topic_name:=/sobit_home/lidar_scan
     ```
 
-### Lifecycle と QoS に関する注意
+### Lifecycle and QoS Notes
 
-- `dr_spaam_ros` は lifecycle node として動作します．
-- `configure` で Detector と Publisher を生成し，`activate` で `LaserScan` の Subscriber を生成します．
-- `LaserScan` は `qos_profile_sensor_data` (`BEST_EFFORT`) で購読します．
-- そのため，多くの ROS 2 LiDAR ドライバと QoS 互換を保てます．
+- `dr_spaam_ros` now runs as a lifecycle node.
+- The detector and publishers are created during `configure`.
+- The `LaserScan` subscription is created during `activate`.
+- The `LaserScan` subscriber uses `qos_profile_sensor_data` (`BEST_EFFORT`).
+- This matches most ROS 2 LiDAR drivers and avoids QoS reliability mismatches.
 
-Publisher 側の QoS を確認したい場合:
+To inspect the publisher QoS:
 ```sh
 $ ros2 topic info /scan --verbose
 ```
 
-### 主な launch 引数
+### Main Launch Arguments
 
-| 引数 | 説明 | デフォルト |
+| Argument | Description | Default |
 | --- | --- | --- |
-| `param_file` | パラメータ YAML のパス | `dr_spaam_ros/config/dr_spaam_param.yaml` |
-| `scan_topic_name` | 入力 `LaserScan` topic | `/scan` |
-| `namespace` | ノード namespace | `""` |
-| `auto_configure` | 起動時に configure する | `True` |
-| `auto_activate` | 起動時に activate する | `True` |
+| `param_file` | Path to the parameter YAML file | `dr_spaam_ros/config/dr_spaam_param.yaml` |
+| `scan_topic_name` | Input `LaserScan` topic | `/scan` |
+| `namespace` | Node namespace | `""` |
+| `auto_configure` | Configure on startup | `True` |
+| `auto_activate` | Activate on startup | `True` |
 
-### 主な ROS パラメータ
+### Main ROS Parameters
 
-| パラメータ | 説明 | デフォルト |
+| Parameter | Description | Default |
 | --- | --- | --- |
-| `weight_file` | `weights/` 以下の重みファイル名 | `ckpt_jrdb_ann_ft_dr_spaam_e20.pth` |
-| `detector_model` | `DROW3` または `DR-SPAAM` | `DR-SPAAM` |
-| `use_gpu` | GPU 推論を使うか | `False` |
-| `conf_thresh` | 検出信頼度のしきい値 | `0.5` |
-| `stride` | scan の間引き幅 | `1` |
-| `panoramic_scan` | 360 度 scan かどうか | `False` |
-| `scan_topic_name` | 入力 `LaserScan` topic 名 | `/scan` |
+| `weight_file` | Weight filename under `weights/` | `ckpt_jrdb_ann_ft_dr_spaam_e20.pth` |
+| `detector_model` | `DROW3` or `DR-SPAAM` | `DR-SPAAM` |
+| `use_gpu` | Whether to use GPU inference | `False` |
+| `conf_thresh` | Detection confidence threshold | `0.5` |
+| `stride` | Scan downsampling stride | `1` |
+| `panoramic_scan` | Whether the scan covers 360 degrees | `False` |
+| `scan_topic_name` | Input `LaserScan` topic name | `/scan` |
 
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Subscribers & Publishers
 
 - Subscribers:
 
-| トピック名 | 型 | 意味 |
+| Topic | Type | Meaning |
 | --- | --- | --- |
-| `/scan` または `scan_topic_name` で指定した topic | sensor_msgs/LaserScan | LiDARのスキャン情報 |
+| `/scan` or the topic passed by `scan_topic_name` | sensor_msgs/LaserScan | LiDAR scan data |
 
 - Publishers:
 
-| トピック名 | 型 | 意味 |
+| Topic | Type | Meaning |
 | --- | --- | --- |
-| /dr_spaam_ros/dr_spaam_detections | geometry_msgs/PoseArray   | 人物検出結果 | 
-| /dr_spaam_ros/dr_spaam_rviz       | visualization_msgs/Marker | RViz上の結果の可視化 |
+| /dr_spaam_ros/dr_spaam_detections | geometry_msgs/PoseArray   | Person detection result array |
+| /dr_spaam_ros/dr_spaam_rviz       | visualization_msgs/Marker | Result Visualization over RViz |
 
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
-
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Lifecycle Control
 
-人物検出の有効化 / 無効化は lifecycle で行います．
+Use lifecycle transitions, not a service, to stop or resume detection.
 
 ```sh
 $ ros2 lifecycle set /dr_spaam_ros deactivate
 $ ros2 lifecycle set /dr_spaam_ros activate
 ```
 
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-<!-- マイルストーン -->
-## マイルストーン
-
-- [○] lifecycle node への対応
+## Milestone
+- [○] Support lifecycle node control
 - [○] OSS
-    - [○] ドキュメンテーションの充実
-    - [○] コーディングスタイルの統一
+    - [x] Improved documentation
+    - [x] Unified coding style
 
-現時点のバッグや新規機能の依頼を確認するために[Issueページ][issues-url] をご覧ください．
+See the [open issues][issues-url] for a full list of proposed features (and known issues).
 
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-<!-- CONTRIBUTING -->
-<!-- ## Contributing
-
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p> -->
-
-
-<!-- LICENSE -->
-<!-- ## License
-
-Distributed under the MIT License. See `LICENSE.txt` for more NOTErmation.
-
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p> -->
-
-
-<!-- 参考文献 -->
-## 参考文献
+## Acknowledgments
 
 * [DROW3](https://arxiv.org/abs/1804.02463)
 * [DR-SPAAM](https://arxiv.org/abs/2004.14079)
 * [ 2D_lidar_person_detection(official)](https://github.com/VisualComputingInstitute/2D_lidar_person_detection)
 * [ROS 2 Humble](https://docs.ros.org/en/humble/)
 
-<p align="right">(<a href="#readme-top">上に戻る</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/github/contributors/TeamSOBITS/2d_lidar_person_detection.svg?style=for-the-badge
 [contributors-url]: https://github.com/TeamSOBITS/2d_lidar_person_detection/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/TeamSOBITS/2d_lidar_person_detection.svg?style=for-the-badge
