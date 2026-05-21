@@ -9,7 +9,6 @@ from ament_index_python.packages import get_package_share_directory
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Point, Pose, PoseArray
 from visualization_msgs.msg import Marker
-from std_srvs.srv import SetBool
 
 from dr_spaam.detector import Detector
 
@@ -23,7 +22,6 @@ class DrSpaamROS(LifecycleNode):
         self._dets_pub = None
         self._rviz_pub = None
         self._scan_sub = None
-        self._run_ctrl_srv = None
         self._pub_qos_policy = rclpy.qos.QoSProfile(
             reliability=rclpy.qos.ReliabilityPolicy.RELIABLE,
             history=rclpy.qos.HistoryPolicy.KEEP_LAST,
@@ -44,7 +42,6 @@ class DrSpaamROS(LifecycleNode):
         self.declare_parameter("panoramic_scan", False)
         self.declare_parameter("queue_size", 1)
         self.declare_parameter("scan_topic_name", "/scan")
-        self.declare_parameter("execute_default", True)
         self.declare_parameter("auto_configure", True)
         self.declare_parameter("auto_activate", True)
 
@@ -63,7 +60,6 @@ class DrSpaamROS(LifecycleNode):
         self.panoramic_scan = self.get_parameter("panoramic_scan").get_parameter_value().bool_value
         self.queue_size = self.get_parameter("queue_size").get_parameter_value().integer_value
         self.scan_topic = self.get_parameter("scan_topic_name").get_parameter_value().string_value
-        self.detect_mode = self.get_parameter("execute_default").get_parameter_value().bool_value
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         self.get_logger().info("Configuring dr_spaam_ros...")
@@ -88,9 +84,6 @@ class DrSpaamROS(LifecycleNode):
         self._rviz_pub = self.create_lifecycle_publisher(
             Marker, "dr_spaam_rviz", self._pub_qos_policy,
         )
-        self._run_ctrl_srv = self.create_service(
-            SetBool, "dr_spaam_ros/run_ctr", self._run_ctrl_callback
-        )
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
@@ -112,9 +105,6 @@ class DrSpaamROS(LifecycleNode):
         if self._scan_sub is not None:
             self.destroy_subscription(self._scan_sub)
             self._scan_sub = None
-        if self._run_ctrl_srv is not None:
-            self.destroy_service(self._run_ctrl_srv)
-            self._run_ctrl_srv = None
         if self._dets_pub is not None:
             self.destroy_lifecycle_publisher(self._dets_pub)
             self._dets_pub = None
@@ -128,25 +118,8 @@ class DrSpaamROS(LifecycleNode):
         self.on_cleanup(state)
         return TransitionCallbackReturn.SUCCESS
 
-    def _run_ctrl_callback(self, request, response):
-        """
-        @brief      Callback function for service call.
-        """
-        if ((request.data == True) or (request.data == False)):
-            response.success = True
-            self.detect_mode = request.data
-        else:
-            response.success = False
-            self.detect_mode = False
-            self.get_logger().debug("[DrSpaamROS] Unknown command: %d" % request.data)
-
-        return response
-
     def _scan_callback(self, msg):
         if self._detector is None:
-            return
-
-        if not self.detect_mode:
             return
 
         if (
