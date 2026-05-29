@@ -119,7 +119,7 @@ class DrSpaamROS(LifecycleNode):
         return TransitionCallbackReturn.SUCCESS
 
     def _scan_callback(self, msg):
-        if self._detector is None:
+        if self._detector is None or self._dets_pub is None or self._rviz_pub is None:
             return
 
         if (
