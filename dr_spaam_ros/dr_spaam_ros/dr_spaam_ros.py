@@ -1,5 +1,7 @@
+import gc
 import numpy as np
 import os
+import torch
 
 import rclpy
 from rclpy.lifecycle import LifecycleNode, TransitionCallbackReturn, LifecycleState
@@ -86,6 +88,35 @@ class DrSpaamROS(LifecycleNode):
         )
         return TransitionCallbackReturn.SUCCESS
 
+    def _release_detector(self) -> None:
+        detector = self._detector
+        self._detector = None
+
+        clear_cuda_cache = False
+        if detector is not None:
+            model = getattr(detector, "_model", None)
+            if model is not None:
+                try:
+                    clear_cuda_cache = next(model.parameters()).is_cuda
+                except StopIteration:
+                    clear_cuda_cache = False
+                except AttributeError:
+                    clear_cuda_cache = bool(getattr(detector, "_gpu", False))
+                if clear_cuda_cache:
+                    model.cpu()
+                detector._model = None
+                del model
+            else:
+                clear_cuda_cache = bool(getattr(detector, "_gpu", False))
+            detector._scan_phi = None
+            del detector
+
+        gc.collect()
+        if clear_cuda_cache and torch.cuda.is_available():
+            self.get_logger().info("Clearing CUDA cache")
+            torch.cuda.synchronize()
+            torch.cuda.empty_cache()
+
     def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
         self.get_logger().info("Activating dr_spaam_ros...")
         self._scan_sub = self.create_subscription(
@@ -111,7 +142,7 @@ class DrSpaamROS(LifecycleNode):
         if self._rviz_pub is not None:
             self.destroy_publisher(self._rviz_pub)
             self._rviz_pub = None
-        self._detector = None
+        self._release_detector()
         return TransitionCallbackReturn.SUCCESS
 
     def on_shutdown(self, state: LifecycleState) -> TransitionCallbackReturn:
