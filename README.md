@@ -74,8 +74,8 @@ First, please set up the following environment before proceeding to the next ins
 
 | System  | Version |
 | --- | --- |
-| Ubuntu  | 22.04 (Jammy Jellyfish) |
-| ROS     | Humble Hawksbill |
+| Ubuntu  | 24.04 (Noble Numbat) |
+| ROS 2   | Jazzy Jalisco |
 | Python  | 3.8 |
 | PyTorch | 2.2.1 (Tested) |
 
