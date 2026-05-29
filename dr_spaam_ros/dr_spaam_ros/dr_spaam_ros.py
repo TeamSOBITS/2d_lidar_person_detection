@@ -184,6 +184,7 @@ def detections_to_rviz_marker(dets_xy, dets_cls):
     xy_offsets = r * np.stack((np.cos(ang), np.sin(ang)), axis=1)
 
     # to msg
+    points: list = []
     for d_xy, d_cls in zip(dets_xy, dets_cls):
         for i in range(len(xy_offsets) - 1):
             # start point of a segment
@@ -191,20 +192,22 @@ def detections_to_rviz_marker(dets_xy, dets_cls):
             p0.x = d_xy[0] + xy_offsets[i, 0]
             p0.y = d_xy[1] + xy_offsets[i, 1]
             p0.z = 0.0
-            msg.points.append(p0)
+            points.append(p0)
 
             # end point
             p1 = Point()
             p1.x = d_xy[0] + xy_offsets[i + 1, 0]
             p1.y = d_xy[1] + xy_offsets[i + 1, 1]
             p1.z = 0.0
-            msg.points.append(p1)
+            points.append(p1)
+    msg.points = points
 
     return msg
 
 
 def detections_to_pose_array(dets_xy, dets_cls):
     pose_array = PoseArray()
+    pose_array.poses = []
     for d_xy, d_cls in zip(dets_xy, dets_cls):
         # Detector uses following frame convention:
         # x forward, y rightward, z downward, phi is angle w.r.t. x-axis
