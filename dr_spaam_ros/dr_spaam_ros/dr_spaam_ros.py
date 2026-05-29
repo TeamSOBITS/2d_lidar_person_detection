@@ -3,7 +3,7 @@ import os
 
 import rclpy
 from rclpy.lifecycle import LifecycleNode, TransitionCallbackReturn, LifecycleState
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, qos_profile_sensor_data
 from ament_index_python.packages import get_package_share_directory
 
 from sensor_msgs.msg import LaserScan
@@ -22,9 +22,9 @@ class DrSpaamROS(LifecycleNode):
         self._dets_pub = None
         self._rviz_pub = None
         self._scan_sub = None
-        self._pub_qos_policy = rclpy.qos.QoSProfile(
-            reliability=rclpy.qos.ReliabilityPolicy.RELIABLE,
-            history=rclpy.qos.HistoryPolicy.KEEP_LAST,
+        self._pub_qos_policy = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            history=HistoryPolicy.KEEP_LAST,
             depth=1
         )
         self._scan_qos_policy = qos_profile_sensor_data
