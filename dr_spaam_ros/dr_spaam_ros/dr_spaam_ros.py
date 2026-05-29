@@ -128,11 +128,8 @@ class DrSpaamROS(LifecycleNode):
         ):
             return
 
-        # TODO check the computation here
         if not self._detector.is_ready():
-            self._detector.set_laser_fov(
-                np.rad2deg(msg.angle_increment * len(msg.ranges))
-            )
+            self._detector.set_laser_fov(np.rad2deg(msg.angle_max - msg.angle_min))
 
         scan = np.array(msg.ranges)
         scan[scan == 0.0] = 29.99
