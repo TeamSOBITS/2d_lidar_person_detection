@@ -4,6 +4,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -57,8 +58,8 @@ def generate_launch_description():
             param_file,
             {
                 "scan_topic_name": scan_topic_name,
-                "auto_configure": auto_configure,
-                "auto_activate": auto_activate,
+                "auto_configure": ParameterValue(auto_configure, value_type=bool),
+                "auto_activate": ParameterValue(auto_activate, value_type=bool),
             },
         ],
         output="screen"
