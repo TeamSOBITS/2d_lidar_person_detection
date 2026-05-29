@@ -24,12 +24,8 @@ class DrSpaamROS(LifecycleNode):
         self._dets_pub = None
         self._rviz_pub = None
         self._scan_sub = None
-        self._pub_qos_policy = QoSProfile(
-            reliability=ReliabilityPolicy.RELIABLE,
-            history=HistoryPolicy.KEEP_LAST,
-            depth=1
-        )
-        self._scan_qos_policy = qos_profile_sensor_data
+        self._pub_qos_policy = None
+        self._scan_qos_policy = None
         self._declare_params()
 
     def _declare_params(self):
@@ -66,6 +62,17 @@ class DrSpaamROS(LifecycleNode):
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         self.get_logger().info("Configuring dr_spaam_ros...")
         self._read_params()
+        self._pub_qos_policy = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=self.queue_size
+        )
+        self._scan_qos_policy = QoSProfile(
+            reliability=qos_profile_sensor_data.reliability,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=self.queue_size,
+            durability=qos_profile_sensor_data.durability,
+        )
 
         try:
             self._detector = Detector(
