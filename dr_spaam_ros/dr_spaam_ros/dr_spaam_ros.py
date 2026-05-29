@@ -106,10 +106,10 @@ class DrSpaamROS(LifecycleNode):
             self.destroy_subscription(self._scan_sub)
             self._scan_sub = None
         if self._dets_pub is not None:
-            self.destroy_lifecycle_publisher(self._dets_pub)
+            self.destroy_publisher(self._dets_pub)
             self._dets_pub = None
         if self._rviz_pub is not None:
-            self.destroy_lifecycle_publisher(self._rviz_pub)
+            self.destroy_publisher(self._rviz_pub)
             self._rviz_pub = None
         self._detector = None
         return TransitionCallbackReturn.SUCCESS
