@@ -49,15 +49,13 @@ class Detector(object):
                 )
             )
 
-        # ckpt = torch.load(ckpt_file) # gpuを使用の変更箇所
-        ckpt = torch.load(ckpt_file, map_location=torch.device('cpu')) # cpuを使用の変更箇所
+        ckpt = torch.load(ckpt_file)
         self._model.load_state_dict(ckpt["model_state"])
 
         self._model.eval()
         if gpu:
             torch.backends.cudnn.benchmark = True
-            # self._model = self._model.cuda() # gpu使用の変更箇所
-            self._model = self._model.cpu() # cpu使用の変更箇所
+            self._model = self._model.cuda()
 
     def __call__(self, scan):
         if self._scan_phi is None:
@@ -82,8 +80,8 @@ class Detector(object):
         )
         ct = torch.from_numpy(ct).float()
 
-        # if self._gpu:
-        #     ct = ct.cuda()
+        if self._gpu:
+            ct = ct.cuda()
 
         # inference
         with torch.no_grad():
