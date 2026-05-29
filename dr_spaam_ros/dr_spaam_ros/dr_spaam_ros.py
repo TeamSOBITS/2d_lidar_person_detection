@@ -1,34 +1,47 @@
-# import time
+import gc
 import numpy as np
 import os
+import torch
 
 import rclpy
-from rclpy.node import Node
+from rclpy.lifecycle import LifecycleNode, TransitionCallbackReturn, LifecycleState
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, qos_profile_sensor_data
 from ament_index_python.packages import get_package_share_directory
 
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Point, Pose, PoseArray
 from visualization_msgs.msg import Marker
-from std_srvs.srv import SetBool
 
 from dr_spaam.detector import Detector
-from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSReliabilityPolicy, QoSHistoryPolicy
 
 
-class DrSpaamROS(Node):
+class DrSpaamROS(LifecycleNode):
     """ROS node to detect pedestrian using DROW3 or DR-SPAAM."""
 
     def __init__(self):
         super().__init__('dr_spaam_ros')
-        self._read_params()
-        self._detector = Detector(
-            self.weight_file,
-            model=self.detector_model,
-            gpu=self.use_gpu,
-            stride=self.stride,
-            panoramic_scan=self.panoramic_scan,
-        )
-        self._init()
+        self._detector = None
+        self._dets_pub = None
+        self._rviz_pub = None
+        self._scan_sub = None
+        self._pub_qos_policy = None
+        self._scan_qos_policy = None
+        self._declare_params()
+
+    def _declare_params(self):
+        """
+        @brief      Declares parameters.
+        """
+        self.declare_parameter("weight_file", "ckpt_jrdb_ann_ft_dr_spaam_e20.pth")
+        self.declare_parameter("detector_model", "DR-SPAAM")
+        self.declare_parameter("use_gpu", False)
+        self.declare_parameter("conf_thresh", 0.5)
+        self.declare_parameter("stride", 1)
+        self.declare_parameter("panoramic_scan", False)
+        self.declare_parameter("queue_size", 1)
+        self.declare_parameter("scan_topic_name", "/scan")
+        self.declare_parameter("auto_configure", True)
+        self.declare_parameter("auto_activate", True)
 
     def _read_params(self):
         """
@@ -36,63 +49,115 @@ class DrSpaamROS(Node):
         """
         package_share_directory = get_package_share_directory('dr_spaam_ros')
 
-        self.weight_file    = os.path.join(package_share_directory, "weights", self.declare_parameter("weight_file", "ckpt_jrdb_ann_ft_dr_spaam_e20.pth").value)
-        self.detector_model = self.declare_parameter("detector_model", "DR-SPAAM").value
-        self.use_gpu        = self.declare_parameter("use_gpu", False).value
-        self.conf_thresh    = self.declare_parameter("conf_thresh", 0.5).value
-        self.stride         = self.declare_parameter("stride", 1).value
-        self.panoramic_scan = self.declare_parameter("panoramic_scan", False).value
-        self.queue_size     = self.declare_parameter("queue_size", 1).value
+        weight_file = self.get_parameter("weight_file").get_parameter_value().string_value
+        self.weight_file = os.path.join(package_share_directory, "weights", weight_file)
+        self.detector_model = self.get_parameter("detector_model").get_parameter_value().string_value
+        self.use_gpu = self.get_parameter("use_gpu").get_parameter_value().bool_value
+        self.conf_thresh = self.get_parameter("conf_thresh").get_parameter_value().double_value
+        self.stride = self.get_parameter("stride").get_parameter_value().integer_value
+        self.panoramic_scan = self.get_parameter("panoramic_scan").get_parameter_value().bool_value
+        self.queue_size = self.get_parameter("queue_size").get_parameter_value().integer_value
+        self.scan_topic = self.get_parameter("scan_topic_name").get_parameter_value().string_value
 
-        self.scan_topic     = self.declare_parameter("scan_topic_name", "/scan").value
-        self.detect_mode    = self.declare_parameter("execute_default", True).value
-
-    def _init(self):
-        """
-        @brief      Initialize ROS connection.
-        """
-        qos_policy = rclpy.qos.QoSProfile(
-            reliability=rclpy.qos.ReliabilityPolicy.RELIABLE,
-            # reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT,
-            history=rclpy.qos.HistoryPolicy.KEEP_LAST,
-            depth=1
+    def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
+        self.get_logger().info("Configuring dr_spaam_ros...")
+        self._read_params()
+        self._pub_qos_policy = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=self.queue_size
+        )
+        self._scan_qos_policy = QoSProfile(
+            reliability=qos_profile_sensor_data.reliability,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=self.queue_size,
+            durability=qos_profile_sensor_data.durability,
         )
 
-        # Publisher
-        self._dets_pub = self.create_publisher(
-            PoseArray, "dr_spaam_detections", qos_policy,
-        )
+        try:
+            self._detector = Detector(
+                self.weight_file,
+                model=self.detector_model,
+                gpu=self.use_gpu,
+                stride=self.stride,
+                panoramic_scan=self.panoramic_scan,
+            )
+        except Exception as exc:
+            self.get_logger().error(f"Failed to initialize detector: {exc}")
+            self._detector = None
+            return TransitionCallbackReturn.FAILURE
 
-        self._rviz_pub = self.create_publisher(
-            Marker, "dr_spaam_rviz", qos_policy,
+        self._dets_pub = self.create_lifecycle_publisher(
+            PoseArray, "dr_spaam_detections", self._pub_qos_policy,
         )
+        self._rviz_pub = self.create_lifecycle_publisher(
+            Marker, "dr_spaam_rviz", self._pub_qos_policy,
+        )
+        return TransitionCallbackReturn.SUCCESS
 
-        # Subscriber
+    def _release_detector(self) -> None:
+        detector = self._detector
+        self._detector = None
+
+        clear_cuda_cache = False
+        if detector is not None:
+            model = getattr(detector, "_model", None)
+            if model is not None:
+                try:
+                    clear_cuda_cache = next(model.parameters()).is_cuda
+                except StopIteration:
+                    clear_cuda_cache = False
+                except AttributeError:
+                    clear_cuda_cache = bool(getattr(detector, "_gpu", False))
+                if clear_cuda_cache:
+                    model.cpu()
+                detector._model = None
+                del model
+            else:
+                clear_cuda_cache = bool(getattr(detector, "_gpu", False))
+            detector._scan_phi = None
+            del detector
+
+        gc.collect()
+        if clear_cuda_cache and torch.cuda.is_available():
+            self.get_logger().info("Clearing CUDA cache")
+            torch.cuda.synchronize()
+            torch.cuda.empty_cache()
+
+    def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        self.get_logger().info("Activating dr_spaam_ros...")
         self._scan_sub = self.create_subscription(
-            LaserScan, self.scan_topic, self._scan_callback, qos_policy,
+            LaserScan, self.scan_topic, self._scan_callback, self._scan_qos_policy,
         )
+        return super().on_activate(state)
 
-        # Service
-        self._run_ctrl_srv = self.create_service(
-            SetBool, "dr_spaam_ros/run_ctr", self._run_ctrl_callback
-        )
+    def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        self.get_logger().info("Deactivating dr_spaam_ros...")
+        if self._scan_sub is not None:
+            self.destroy_subscription(self._scan_sub)
+            self._scan_sub = None
+        return super().on_deactivate(state)
 
-    def _run_ctrl_callback(self, request, response):
-        """
-        @brief      Callback function for service call.
-        """
-        if ((request.data == True) or (request.data == False)):
-            response.success = True
-            self.detect_mode = request.data
-        else:
-            response.success = False
-            self.detect_mode = False
-            self.get_logger().debug("[DrSpaamROS] Unknown command: %d" % request.data)
+    def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
+        self.get_logger().info("Cleaning up dr_spaam_ros...")
+        if self._scan_sub is not None:
+            self.destroy_subscription(self._scan_sub)
+            self._scan_sub = None
+        if self._dets_pub is not None:
+            self.destroy_publisher(self._dets_pub)
+            self._dets_pub = None
+        if self._rviz_pub is not None:
+            self.destroy_publisher(self._rviz_pub)
+            self._rviz_pub = None
+        self._release_detector()
+        return TransitionCallbackReturn.SUCCESS
 
-        return response
+    def on_shutdown(self, state: LifecycleState) -> TransitionCallbackReturn:
+        self.on_cleanup(state)
+        return TransitionCallbackReturn.SUCCESS
 
     def _scan_callback(self, msg):
-        if not self.detect_mode:
+        if self._detector is None or self._dets_pub is None or self._rviz_pub is None:
             return
 
         if (
@@ -101,11 +166,8 @@ class DrSpaamROS(Node):
         ):
             return
 
-        # TODO check the computation here
         if not self._detector.is_ready():
-            self._detector.set_laser_fov(
-                np.rad2deg(msg.angle_increment * len(msg.ranges))
-            )
+            self._detector.set_laser_fov(np.rad2deg(msg.angle_max - msg.angle_min))
 
         scan = np.array(msg.ranges)
         scan[scan == 0.0] = 29.99
@@ -157,6 +219,7 @@ def detections_to_rviz_marker(dets_xy, dets_cls):
     xy_offsets = r * np.stack((np.cos(ang), np.sin(ang)), axis=1)
 
     # to msg
+    points: list = []
     for d_xy, d_cls in zip(dets_xy, dets_cls):
         for i in range(len(xy_offsets) - 1):
             # start point of a segment
@@ -164,20 +227,22 @@ def detections_to_rviz_marker(dets_xy, dets_cls):
             p0.x = d_xy[0] + xy_offsets[i, 0]
             p0.y = d_xy[1] + xy_offsets[i, 1]
             p0.z = 0.0
-            msg.points.append(p0)
+            points.append(p0)
 
             # end point
             p1 = Point()
             p1.x = d_xy[0] + xy_offsets[i + 1, 0]
             p1.y = d_xy[1] + xy_offsets[i + 1, 1]
             p1.z = 0.0
-            msg.points.append(p1)
+            points.append(p1)
+    msg.points = points
 
     return msg
 
 
 def detections_to_pose_array(dets_xy, dets_cls):
     pose_array = PoseArray()
+    pose_array.poses = []
     for d_xy, d_cls in zip(dets_xy, dets_cls):
         # Detector uses following frame convention:
         # x forward, y rightward, z downward, phi is angle w.r.t. x-axis
@@ -193,9 +258,30 @@ def detections_to_pose_array(dets_xy, dets_cls):
 def main(args=None):
     rclpy.init(args=args)
     drspaamros = DrSpaamROS()
-    rclpy.spin(drspaamros)
-    drspaamros.destroy_node()
-    rclpy.shutdown()
+
+    auto_configure = drspaamros.get_parameter("auto_configure").get_parameter_value().bool_value
+    auto_activate = drspaamros.get_parameter("auto_activate").get_parameter_value().bool_value
+
+    configure_succeeded = True
+    if auto_configure or auto_activate:
+        configure_result = drspaamros.trigger_configure()
+        configure_succeeded = configure_result == TransitionCallbackReturn.SUCCESS
+    if auto_activate:
+        if configure_succeeded:
+            drspaamros.trigger_activate()
+        else:
+            drspaamros.get_logger().error(
+                "Auto-activation requested, but node configuration failed; "
+                "skipping activation."
+            )
+
+    try:
+        rclpy.spin(drspaamros)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        drspaamros.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":

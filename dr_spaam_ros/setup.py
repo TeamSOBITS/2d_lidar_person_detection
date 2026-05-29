@@ -19,7 +19,7 @@ setup(
  install_requires=['setuptools'],
  zip_safe=True,
  maintainer='Dan Jia',
- maintainer_email='jia@vision.rwth-aachen.de',
+ maintainer_email='simjiahao9@gmail.com',
  description='ROS interface for DR-SPAAM detector',
  license='TODO: License declaration',
  tests_require=['pytest'],
