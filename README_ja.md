@@ -170,7 +170,7 @@ $ ros2 topic info /scan --verbose
 | `weight_file` | `weights/` 以下の重みファイル名 | `ckpt_jrdb_ann_ft_dr_spaam_e20.pth` |
 | `detector_model` | `DROW3` または `DR-SPAAM` | `DR-SPAAM` |
 | `use_gpu` | GPU 推論を使うか | `False` |
-| `conf_thresh` | 検出信頼度のしきい値 | `0.5` |
+| `conf_thresh` | 検出信頼度のしきい値 | `0.9` |
 | `stride` | scan の間引き幅 | `1` |
 | `panoramic_scan` | 360 度 scan かどうか | `False` |
 | `scan_topic_name` | 入力 `LaserScan` topic 名 | `/scan` |

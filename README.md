@@ -171,7 +171,7 @@ $ ros2 topic info /scan --verbose
 | `weight_file` | Weight filename under `weights/` | `ckpt_jrdb_ann_ft_dr_spaam_e20.pth` |
 | `detector_model` | `DROW3` or `DR-SPAAM` | `DR-SPAAM` |
 | `use_gpu` | Whether to use GPU inference | `False` |
-| `conf_thresh` | Detection confidence threshold | `0.5` |
+| `conf_thresh` | Detection confidence threshold | `0.9` |
 | `stride` | Scan downsampling stride | `1` |
 | `panoramic_scan` | Whether the scan covers 360 degrees | `False` |
 | `scan_topic_name` | Input `LaserScan` topic name | `/scan` |
